@@ -16,6 +16,7 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || "",
   waitForConnections: true,
   connectionLimit: Number.parseInt(process.env.DB_POOL_LIMIT || "10"),
+  connectTimeout: 1000,
   queueLimit: 0,
 }
 
@@ -29,6 +30,9 @@ const pool: Pool = globalForDb.__mysqlPool ?? createPool(dbConfig)
 if (!globalForDb.__mysqlPool) {
   globalForDb.__mysqlPool = pool
 }
+
+let isDbOffline = false
+let lastDbCheckTime = 0
 
 // Database connection wrapper
 export class Database {
@@ -48,8 +52,15 @@ export class Database {
 
   // Execute query with parameters
   async query(text: string, params?: any[]): Promise<{ rows: any[]; insertId?: number; affectedRows?: number }> {
+    if (isDbOffline && Date.now() - lastDbCheckTime < 10000) {
+      const err: any = new Error("ECONNREFUSED")
+      err.code = "ECONNREFUSED"
+      throw err
+    }
+
     const attempt = async () => {
       const [rowsOrHeader] = await this.pool.query(text, params)
+      isDbOffline = false
       const isArray = Array.isArray(rowsOrHeader)
       const rows = (isArray ? (rowsOrHeader as RowDataPacket[]) : []) as any[]
       const header = (!isArray ? (rowsOrHeader as ResultSetHeader) : undefined)
@@ -58,8 +69,12 @@ export class Database {
     try {
       return await attempt()
     } catch (error: any) {
-      // Handle Too many connections with a short backoff retry once
       const msg = String(error?.code || error?.message || "")
+      if (msg === "ECONNREFUSED" || msg.includes("ECONNREFUSED") || msg.includes("TIMEDOUT")) {
+        isDbOffline = true
+        lastDbCheckTime = Date.now()
+      }
+      // Handle Too many connections with a short backoff retry once
       if (msg === "ER_CON_COUNT_ERROR") {
         await new Promise((r) => setTimeout(r, 100))
         return await attempt()
