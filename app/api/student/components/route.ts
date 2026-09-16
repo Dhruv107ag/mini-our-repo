@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
         paramsArr = [Number(labId)]
       }
       const list = await db.query(queryStr, paramsArr)
-      const rows = list.rows && list.rows.length > 0 ? list.rows : defaultMockComponents
+      const rows = list.rows || []
       return NextResponse.json({ components: rows })
     } catch (dbErr) {
       console.warn("DB offline, returning mock components list:", dbErr)

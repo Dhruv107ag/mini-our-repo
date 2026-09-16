@@ -24,9 +24,6 @@ export async function GET(req: NextRequest) {
     console.warn("DB offline, using mock bookings list:", e)
     rows = defaultMockBookings
   }
-  if (!rows || rows.length === 0) {
-    rows = defaultMockBookings
-  }
   return NextResponse.json({ bookings: rows })
 }
 

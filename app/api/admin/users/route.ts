@@ -33,9 +33,6 @@ export async function GET(req: NextRequest) {
 		console.warn("DB offline, using mock users list:", err)
 		rows = defaultMockUsers
 	}
-	if (!rows || rows.length === 0) {
-		rows = defaultMockUsers
-	}
 	// Hide 'hod' entries from Users list by default; HOD is a department assignment
 	if (!role) {
 		rows = rows.filter((r: any) => String(r.role) !== 'hod')

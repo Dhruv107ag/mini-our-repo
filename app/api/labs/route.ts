@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       ORDER BY l.name
     `)
 
-    const labs = result.rows && result.rows.length > 0 ? result.rows : defaultMockLabs
+    const labs = result.rows || []
 
     return NextResponse.json({
       success: true,
