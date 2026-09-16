@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, salutation } = await req.json()
+    const { name, salutation } = await req.json().catch(() => ({}))
     
     if (!name || !name.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })

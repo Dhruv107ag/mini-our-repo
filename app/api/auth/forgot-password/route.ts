@@ -14,7 +14,7 @@ function isLikelyStudentEmail(email: string) {
 
 export async function POST(req: Request) {
   try {
-  const { email, role, name } = await req.json()
+  const { email, role, name } = await req.json().catch(() => ({}))
     if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 })
     if (!email.endsWith("@lnmiit.ac.in")) {
       return NextResponse.json({ error: "Please use your LNMIIT email" }, { status: 400 })

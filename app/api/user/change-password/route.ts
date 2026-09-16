@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { currentPassword, newPassword } = await req.json()
+    const { currentPassword, newPassword } = await req.json().catch(() => ({}))
     
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: "Current and new password are required" }, { status: 400 })

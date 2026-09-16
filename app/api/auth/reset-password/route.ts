@@ -16,7 +16,7 @@ function hashPassword(password: string) {
 
 export async function POST(req: Request) {
   try {
-    const { token, password } = await req.json()
+    const { token, password } = await req.json().catch(() => ({}))
     if (!token || !password) return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
 
     // Enforce password policy: 8+ length, upper, lower, number, special
