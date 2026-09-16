@@ -110,8 +110,8 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
       case "admin":
         return [
           ...baseItems,
-          { name: "User Management", href: "/admin/users", icon: Users },
           { name: "Department and Lab Management", href: "/admin/dashboard/department-and-lab-management", icon: Building },
+          { name: "User Management", href: "/admin/users", icon: Users },
           { name: "Timetable", href: "/admin/dashboard/timetable", icon: Calendar },
         ]
 

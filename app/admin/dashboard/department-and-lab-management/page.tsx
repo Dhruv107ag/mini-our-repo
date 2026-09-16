@@ -67,6 +67,7 @@ export default function DepartmentAndLabManagementPage() {
   const [labsQuery, setLabsQuery] = useState("")
   const [staffQuery, setStaffQuery] = useState("")
   const [staffLabFilter, setStaffLabFilter] = useState<string | "all">("all")
+  const [staffDeptFilter, setStaffDeptFilter] = useState<string | "all">("all")
   const [hodPopoverOpen, setHodPopoverOpen] = useState<{ [key: number]: boolean }>({})
   const [coordinatorPopoverOpen, setCoordinatorPopoverOpen] = useState<{ [key: number]: boolean }>({})
   const [labStaffPopoverOpen, setLabStaffPopoverOpen] = useState<{ [key: number]: boolean }>({})
@@ -372,21 +373,26 @@ export default function DepartmentAndLabManagementPage() {
       staff.email.toLowerCase().includes(staffQuery.toLowerCase()) ||
       (staff.department && staff.department.toLowerCase().includes(staffQuery.toLowerCase()))
     
-    if (staffLabFilter === "all") return matchesQuery
+    const matchesDept = staffDeptFilter === "all" || 
+      (staff.department && (
+        staff.department === staffDeptFilter || 
+        staff.department.toLowerCase() === staffDeptFilter.toLowerCase()
+      ))
     
+    let matchesLab = true
     if (staffLabFilter === "unassigned") {
       const isAssigned = labs.some(lab => 
         lab.staff_ids_csv?.split(',').map(id => parseInt(id.trim())).includes(staff.id)
       )
-      return matchesQuery && !isAssigned
+      matchesLab = !isAssigned
+    } else if (staffLabFilter !== "all") {
+      matchesLab = labs.some(lab => 
+        lab.code === staffLabFilter && 
+        lab.staff_ids_csv?.split(',').map(id => parseInt(id.trim())).includes(staff.id)
+      )
     }
-    
-    // Filter by specific lab
-    const isAssignedToLab = labs.some(lab => 
-      lab.code === staffLabFilter && 
-      lab.staff_ids_csv?.split(',').map(id => parseInt(id.trim())).includes(staff.id)
-    )
-    return matchesQuery && isAssignedToLab
+
+    return matchesQuery && matchesDept && matchesLab
   })
 
   if (!authChecked) return null
@@ -839,9 +845,23 @@ export default function DepartmentAndLabManagementPage() {
               <CardTitle>Lab Staff Management</CardTitle>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
+                  <Label className="text-xs">Filter by Department</Label>
+                  <Select value={staffDeptFilter} onValueChange={(v) => setStaffDeptFilter(v)}>
+                    <SelectTrigger className="w-48"><SelectValue placeholder="All Departments" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Departments</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.code}>
+                          {dept.code} - {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
                   <Label className="text-xs">Filter by Lab</Label>
                   <Select value={staffLabFilter} onValueChange={(v) => setStaffLabFilter(v as any)}>
-                    <SelectTrigger className="w-52"><SelectValue placeholder="All" /></SelectTrigger>
+                    <SelectTrigger className="w-48"><SelectValue placeholder="All" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Staff</SelectItem>
                       <SelectItem value="unassigned">Unassigned Staff</SelectItem>
@@ -1060,6 +1080,7 @@ export default function DepartmentAndLabManagementPage() {
                   <SelectItem value="dr">Dr.</SelectItem>
                   <SelectItem value="mr">Mr.</SelectItem>
                   <SelectItem value="mrs">Mrs.</SelectItem>
+                  <SelectItem value="ms">Ms. / Miss</SelectItem>
                 </SelectContent>
               </Select>
             </div>

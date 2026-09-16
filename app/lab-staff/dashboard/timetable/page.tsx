@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { CalendarDays, Clock, Search, Filter, Eye, Plus, Edit, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, Search, Filter, Eye, Plus, Edit, Trash2, Kanban, LayoutGrid, List, GripVertical } from "lucide-react"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -59,7 +59,80 @@ export default function LabStaffTimetablePage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("view")
+  const [viewType, setViewType] = useState<"kanban" | "grid" | "table">("kanban")
   const [userId, setUserId] = useState<string>("")
+  
+  // Drag and Drop States
+  const [draggedEntry, setDraggedEntry] = useState<TimetableEntry | null>(null)
+  const [dragOverDay, setDragOverDay] = useState<number | null>(null)
+
+  const handleDragStart = (e: React.DragEvent, entry: TimetableEntry) => {
+    setDraggedEntry(entry)
+    e.dataTransfer.setData("text/plain", entry.id.toString())
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (e: React.DragEvent, dayValue: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (dragOverDay !== dayValue) {
+      setDragOverDay(dayValue)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOverDay(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetDayValue: number) => {
+    e.preventDefault()
+    setDragOverDay(null)
+
+    if (!draggedEntry) return
+    if (draggedEntry.day_of_week === targetDayValue) return
+
+    const updatedEntry = {
+      ...draggedEntry,
+      day_of_week: targetDayValue,
+      time_slot_start: draggedEntry.time_slot_start.substring(0, 5),
+      time_slot_end: draggedEntry.time_slot_end.substring(0, 5)
+    }
+
+    // Optimistic UI update
+    setTimetableEntries(prev =>
+      prev.map(item => (item.id === draggedEntry.id ? { ...item, day_of_week: targetDayValue } : item))
+    )
+
+    try {
+      const res = await fetch("/api/lab-staff/timetable/entries", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedEntry)
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Failed to move session")
+      }
+
+      const targetDayName = getDayName(targetDayValue)
+      toast({
+        title: "Session Moved 🚚",
+        description: `Successfully moved to ${targetDayName}`
+      })
+      loadTimetableEntries()
+    } catch (error: any) {
+      loadTimetableEntries()
+      toast({
+        title: "Move Failed",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
+      setDraggedEntry(null)
+    }
+  }
   
   // Data states
   const [labs, setLabs] = useState<Lab[]>([])
@@ -505,122 +578,330 @@ export default function LabStaffTimetablePage() {
 
         {/* View Timetable Tab */}
         <TabsContent value="view" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Weekly Timetable View
-                <Badge variant="outline">{filteredEntries.length} entries</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-auto max-h-[70vh]">
-                <div className="min-w-[1200px]">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background border-b z-20">
-                      <TableRow>
-                        <TableHead className="w-20 text-xs font-medium bg-muted/50 sticky left-0 z-30 border-r">Time</TableHead>
-                        {DAYS_OF_WEEK.map(day => (
-                          <TableHead key={day.value} className="text-center min-w-[180px] text-xs font-medium bg-muted/50">
-                            {day.label}
-                          </TableHead>
+          {/* View Mode Switcher */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-muted/40 p-2.5 rounded-xl border">
+            <div className="flex items-center gap-1 bg-background p-1 rounded-lg border shadow-sm w-full sm:w-auto">
+              <Button
+                variant={viewType === "kanban" ? "default" : "ghost"}
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-medium flex-1 sm:flex-initial"
+                onClick={() => setViewType("kanban")}
+              >
+                <Kanban className="h-3.5 w-3.5" />
+                Kanban Board
+              </Button>
+              <Button
+                variant={viewType === "grid" ? "default" : "ghost"}
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-medium flex-1 sm:flex-initial"
+                onClick={() => setViewType("grid")}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Hourly Matrix
+              </Button>
+              <Button
+                variant={viewType === "table" ? "default" : "ghost"}
+                size="sm"
+                className="h-8 text-xs gap-1.5 font-medium flex-1 sm:flex-initial"
+                onClick={() => setViewType("table")}
+              >
+                <List className="h-3.5 w-3.5" />
+                List View
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground font-medium px-2">
+              Showing <span className="font-bold text-foreground">{filteredEntries.length}</span> scheduled sessions
+            </div>
+          </div>
+
+          {/* 1. KANBAN BOARD VIEW (CENTERED FLEX LAYOUT WITH DRAG & DROP) */}
+          {viewType === "kanban" && (
+            <div className="w-full overflow-x-auto pb-6">
+              <div className="flex flex-wrap justify-center items-start gap-4 max-w-full mx-auto min-w-[320px]">
+                {DAYS_OF_WEEK.map((day) => {
+                  const dayEntries = filteredEntries
+                    .filter((e) => e.day_of_week === day.value)
+                    .sort((a, b) => a.time_slot_start.localeCompare(b.time_slot_start))
+
+                  const isOver = dragOverDay === day.value
+
+                  return (
+                    <div
+                      key={day.value}
+                      onDragOver={(e) => handleDragOver(e, day.value)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, day.value)}
+                      className={`w-full sm:w-[280px] md:w-[240px] lg:w-[230px] xl:w-[220px] rounded-2xl border transition-all duration-200 flex flex-col min-h-[480px] p-3.5 shadow-sm ${
+                        isOver
+                          ? "border-indigo-500 ring-4 ring-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/30 scale-[1.02]"
+                          : "bg-slate-50/80 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800"
+                      }`}
+                    >
+                      {/* Day Column Header */}
+                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{day.label}</span>
+                          <Badge
+                            variant={dayEntries.length > 0 ? "default" : "secondary"}
+                            className="h-5 px-1.5 text-[10px] rounded-full font-semibold"
+                          >
+                            {dayEntries.length}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                          onClick={() => {
+                            setEntryForm((s) => ({ ...s, day_of_week: day.value }))
+                            openCreateEntry()
+                          }}
+                          title={`Add session to ${day.label}`}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Column Cards Stack */}
+                      <div className="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1">
+                        {dayEntries.length === 0 ? (
+                          <div className={`h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-3 text-center transition-colors ${
+                            isOver ? "border-indigo-400 bg-indigo-100/30" : "border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-950/20"
+                          }`}>
+                            <CalendarDays className="h-6 w-6 text-slate-300 dark:text-slate-700 mb-1" />
+                            <span className="text-xs text-slate-400 font-medium">
+                              {isOver ? "Drop session here" : "No sessions scheduled"}
+                            </span>
+                            {!isOver && (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="text-xs text-primary h-6 p-0 mt-1 font-semibold"
+                                onClick={() => {
+                                  setEntryForm((s) => ({ ...s, day_of_week: day.value }))
+                                  openCreateEntry()
+                                }}
+                              >
+                                + Add Session
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          dayEntries.map((entry) => {
+                            const labName = getLabName(entry.lab_id)
+                            const isBeingDragged = draggedEntry?.id === entry.id
+
+                            return (
+                              <div
+                                key={entry.id}
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, entry)}
+                                className={`group relative bg-white dark:bg-slate-850 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing hover:-translate-y-0.5 border-l-4 border-l-indigo-500 ${
+                                  isBeingDragged ? "opacity-40 scale-95 border-dashed" : "opacity-100"
+                                }`}
+                              >
+                                {/* Drag Grip Handle */}
+                                <div className="absolute right-2.5 top-2.5 text-slate-300 group-hover:text-slate-500 transition-colors">
+                                  <GripVertical className="h-4 w-4" />
+                                </div>
+
+                                {/* Top Accent Pill & Actions */}
+                                <div className="flex items-center justify-between gap-2 mb-2 pr-5">
+                                  <Badge className="bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 font-semibold text-[11px] px-2 py-0.5">
+                                    {labName}
+                                  </Badge>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0 hover:bg-slate-100"
+                                      onClick={() => openEditEntry(entry)}
+                                    >
+                                      <Edit className="h-3 w-3 text-slate-600" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0 hover:bg-red-50 text-red-500"
+                                      onClick={() => confirmDelete(entry.id)}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Time Slot */}
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                                  <Clock className="h-3.5 w-3.5 text-indigo-500" />
+                                  <span>
+                                    {entry.time_slot_start.substring(0, 5)} - {entry.time_slot_end.substring(0, 5)}
+                                  </span>
+                                </div>
+
+                                {/* Notes / Details */}
+                                {entry.notes ? (
+                                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed bg-slate-50 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                                    {entry.notes}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs italic text-slate-400">Regular Session</p>
+                                )}
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 2. HOURLY MATRIX GRID VIEW */}
+          {viewType === "grid" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-base">
+                  Weekly Hourly Matrix
+                  <Badge variant="outline">{filteredEntries.length} entries</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-auto max-h-[70vh]">
+                  <div className="min-w-[1200px]">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-background border-b z-20">
+                        <TableRow>
+                          <TableHead className="w-20 text-xs font-medium bg-muted/50 sticky left-0 z-30 border-r">Time</TableHead>
+                          {DAYS_OF_WEEK.map(day => (
+                            <TableHead key={day.value} className="text-center min-w-[180px] text-xs font-medium bg-muted/50">
+                              {day.label}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {HOURLY_VIEW_SLOTS.map((timeSlot) => (
+                          <TableRow key={timeSlot} className="border-b h-16">
+                            <TableCell className="font-medium text-xs bg-muted/30 sticky left-0 z-10 border-r p-2 align-top">
+                              <div className="font-semibold">{timeSlot}</div>
+                            </TableCell>
+                            {DAYS_OF_WEEK.map(day => {
+                              const cellData = weekView[day.value]?.[timeSlot]
+                              if (!cellData) return <TableCell key={day.value} className="p-1" />
+                              
+                              const entry = cellData.entry
+                              if (entry && !cellData.isStart) {
+                                const currentSlotIndex = HOURLY_VIEW_SLOTS.indexOf(timeSlot)
+                                let isPartOfSpan = false
+                                for (let i = 0; i < currentSlotIndex; i++) {
+                                  const prevSlot = HOURLY_VIEW_SLOTS[i]
+                                  const prevCellData = weekView[day.value]?.[prevSlot]
+                                  if (prevCellData?.entry?.id === entry.id && prevCellData?.isStart) {
+                                    isPartOfSpan = true
+                                    break
+                                  }
+                                }
+                                if (isPartOfSpan) return null
+                              }
+                              
+                              if (entry && cellData.isStart) {
+                                return (
+                                  <TableCell 
+                                    key={day.value} 
+                                    className="p-2 align-top border-l border-r relative"
+                                    rowSpan={cellData.rowSpan}
+                                  >
+                                    <div className="h-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-400 rounded-lg p-3 hover:from-blue-100 hover:to-blue-200 transition-all shadow-sm hover:shadow-md">
+                                      <div className="space-y-2">
+                                        <div className="font-bold text-blue-900 text-sm leading-tight">
+                                          {cellData.labName}
+                                        </div>
+                                        {entry.notes && (
+                                          <div className="text-blue-700 text-xs leading-tight break-words">
+                                            {entry.notes}
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-1 pt-1">
+                                          <Clock className="h-3 w-3 text-blue-600" />
+                                          <span className="text-blue-600 font-semibold text-xs">
+                                            {entry.time_slot_start.substring(0,5)} - {entry.time_slot_end.substring(0,5)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                )
+                              }
+                              
+                              return (
+                                <TableCell key={day.value} className="p-2 bg-gray-50/30">
+                                  <div className="h-full min-h-[48px]" />
+                                </TableCell>
+                              )
+                            })}
+                          </TableRow>
                         ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 3. TABLE LIST VIEW */}
+          {viewType === "table" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-base">
+                  Timetable List View
+                  <Badge variant="outline">{filteredEntries.length} entries</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Lab</TableHead>
+                        <TableHead>Day</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead className="w-24">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {HOURLY_VIEW_SLOTS.map((timeSlot, rowIndex) => (
-                        <TableRow key={timeSlot} className="border-b h-16">
-                          <TableCell className="font-medium text-xs bg-muted/30 sticky left-0 z-10 border-r p-2 align-top">
-                            <div className="font-semibold">{timeSlot}</div>
-                          </TableCell>
-                          {DAYS_OF_WEEK.map(day => {
-                            const cellData = weekView[day.value]?.[timeSlot]
-                            if (!cellData) return <TableCell key={day.value} className="p-1" />
-                            
-                            // Skip rendering cell content if this is a continuation cell (not the start)
-                            const entry = cellData.entry
-                            
-                            // If this is a continuation of a spanning cell, don't render TD at all
-                            if (entry && !cellData.isStart) {
-                              // Find the start slot for this entry to check if it's truly spanning
-                              const entryStartTime = entry.time_slot_start.substring(0, 5)
-                              const currentSlotIndex = HOURLY_VIEW_SLOTS.indexOf(timeSlot)
-                              
-                              // Check if there's a previous slot with this same entry as the start
-                              let isPartOfSpan = false
-                              for (let i = 0; i < currentSlotIndex; i++) {
-                                const prevSlot = HOURLY_VIEW_SLOTS[i]
-                                const prevCellData = weekView[day.value]?.[prevSlot]
-                                if (prevCellData?.entry?.id === entry.id && prevCellData?.isStart) {
-                                  isPartOfSpan = true
-                                  break
-                                }
-                              }
-                              
-                              // If this is part of a rowSpan from above, don't render the TD
-                              if (isPartOfSpan) {
-                                return null
-                              }
-                            }
-                            
-                            // Render the entry cell with proper rowSpan
-                            if (entry && cellData.isStart) {
-                              return (
-                                <TableCell 
-                                  key={day.value} 
-                                  className="p-2 align-top border-l border-r relative"
-                                  rowSpan={cellData.rowSpan}
-                                >
-                                  <div 
-                                    className="h-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-400 rounded-lg p-3 hover:from-blue-100 hover:to-blue-200 transition-all shadow-sm hover:shadow-md"
-                                  >
-                                    <div className="space-y-2">
-                                      {/* Lab Name */}
-                                      <div className="font-bold text-blue-900 text-sm leading-tight">
-                                        {cellData.labName}
-                                      </div>
-                                      
-                                      {/* Notes/Description */}
-                                      {entry.notes && (
-                                        <div className="text-blue-700 text-xs leading-tight break-words">
-                                          {entry.notes}
-                                        </div>
-                                      )}
-                                      
-                                      {/* Time Range Badge */}
-                                      <div className="flex items-center gap-1 pt-1">
-                                        <Clock className="h-3 w-3 text-blue-600" />
-                                        <span className="text-blue-600 font-semibold text-xs">
-                                          {entry.time_slot_start.substring(0,5)} - {entry.time_slot_end.substring(0,5)}
-                                        </span>
-                                      </div>
-                                      
-                                      {/* Duration Indicator */}
-                                      {cellData.rowSpan > 1 && (
-                                        <div className="text-blue-500 text-[10px] font-medium bg-blue-200/50 px-2 py-0.5 rounded-full inline-block">
-                                          {cellData.rowSpan} hour{cellData.rowSpan > 1 ? 's' : ''}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </TableCell>
-                              )
-                            }
-                            
-                            // Empty cell
-                            return (
-                              <TableCell key={day.value} className="p-2 bg-gray-50/30">
-                                <div className="h-full min-h-[48px]" />
-                              </TableCell>
-                            )
-                          })}
-                        </TableRow>
-                      ))}
+                      {filteredEntries
+                        .sort((a, b) => {
+                          if (a.day_of_week !== b.day_of_week) return a.day_of_week - b.day_of_week
+                          return a.time_slot_start.localeCompare(b.time_slot_start)
+                        })
+                        .map((entry, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium">{getLabName(entry.lab_id)}</TableCell>
+                            <TableCell><Badge variant="outline">{getDayName(entry.day_of_week)}</Badge></TableCell>
+                            <TableCell className="text-sm">{entry.time_slot_start.substring(0, 5)} - {entry.time_slot_end.substring(0, 5)}</TableCell>
+                            <TableCell className="text-sm">{entry.notes || 'Lab Session'}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" onClick={() => openEditEntry(entry)} className="h-7 w-7 p-0">
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => confirmDelete(entry.id!)} className="h-7 w-7 p-0 text-red-500">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Manage Entries Tab (List View) */}

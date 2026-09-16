@@ -1129,7 +1129,7 @@ CREATE TABLE `year_config` (
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
 /*!50001 SET character_set_client      = utf8mb4 */;
 /*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_multi_lab_bookings` AS select `br`.`id` AS `booking_id`,`br`.`requested_by` AS `requested_by`,`br`.`booking_date` AS `booking_date`,`br`.`start_time` AS `start_time`,`br`.`end_time` AS `end_time`,`br`.`purpose` AS `purpose`,`br`.`status` AS `status`,`br`.`responsible_person_name` AS `responsible_person_name`,`br`.`responsible_person_email` AS `responsible_person_email`,`br`.`is_multi_lab` AS `is_multi_lab`,`br`.`lab_ids` AS `lab_ids`,group_concat(concat(`l`.`name`,':',`mla`.`status`) order by `l`.`name` ASC separator ', ') AS `lab_approval_status`,count((case when (`mla`.`status` = 'approved') then 1 end)) AS `approved_count`,count((case when (`mla`.`status` = 'pending') then 1 end)) AS `pending_count`,count((case when (`mla`.`status` = 'rejected') then 1 end)) AS `rejected_count`,count(`mla`.`id`) AS `total_labs` from ((`booking_requests` `br` left join `multi_lab_approvals` `mla` on((`br`.`id` = `mla`.`booking_request_id`))) left join `labs` `l` on((`mla`.`lab_id` = `l`.`id`))) where (`br`.`is_multi_lab` = 1) group by `br`.`id` */;

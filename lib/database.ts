@@ -9,14 +9,14 @@ import { createPool, Pool, PoolConnection, RowDataPacket, ResultSetHeader } from
 
 // Database configuration
 const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "127.0.0.1",
   port: Number.parseInt(process.env.DB_PORT || "3306"),
   database: process.env.DB_NAME || "lnmiit_lab_management",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
   waitForConnections: true,
   connectionLimit: Number.parseInt(process.env.DB_POOL_LIMIT || "10"),
-  connectTimeout: 1000,
+  connectTimeout: 10000,
   queueLimit: 0,
 }
 
@@ -52,7 +52,7 @@ export class Database {
 
   // Execute query with parameters
   async query(text: string, params?: any[]): Promise<{ rows: any[]; insertId?: number; affectedRows?: number }> {
-    if (isDbOffline && Date.now() - lastDbCheckTime < 10000) {
+    if (isDbOffline && Date.now() - lastDbCheckTime < 1000) {
       const err: any = new Error("ECONNREFUSED")
       err.code = "ECONNREFUSED"
       throw err
@@ -234,17 +234,15 @@ export const dbOperations = {
 
   async getDbUptimeSeconds() {
     try {
-      // Try performance_schema first
-      const res = await db.query(
-        `SELECT VARIABLE_VALUE as val FROM performance_schema.global_status WHERE VARIABLE_NAME = 'Uptime'`
-      )
-      if (res.rows[0]?.val != null) return Number(res.rows[0].val)
+      const res = await db.query(`SHOW GLOBAL STATUS LIKE 'Uptime'`)
+      const row = res.rows[0]
+      if (row && (row.Value || row.value)) return Number(row.Value || row.value)
     } catch {}
     try {
-      const res2 = await db.query(`SHOW GLOBAL STATUS LIKE 'Uptime'`)
-      // mysql2 returns rows with columns Variable_name, Value
-      const row = res2.rows[0]
-      if (row && (row.Value || row.value)) return Number(row.Value || row.value)
+      const res2 = await db.query(
+        `SELECT VARIABLE_VALUE as val FROM performance_schema.global_status WHERE VARIABLE_NAME = 'Uptime'`
+      )
+      if (res2.rows[0]?.val != null) return Number(res2.rows[0].val)
     } catch {}
     return 0
   },

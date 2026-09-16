@@ -490,6 +490,7 @@ export default function UsersPage() {
                     <SelectItem value="dr">Dr</SelectItem>
                     <SelectItem value="mr">Mr</SelectItem>
                     <SelectItem value="mrs">Mrs</SelectItem>
+                    <SelectItem value="ms">Ms / Miss</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -559,6 +560,7 @@ export default function UsersPage() {
                   <SelectItem value="dr">Dr</SelectItem>
                   <SelectItem value="mr">Mr</SelectItem>
                   <SelectItem value="mrs">Mrs</SelectItem>
+                  <SelectItem value="ms">Ms / Miss</SelectItem>
                 </SelectContent>
               </Select>
             </div>

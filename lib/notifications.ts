@@ -164,7 +164,9 @@ export const emailTemplates = {
           'prof': 'Prof.',
           'dr': 'Dr.',
           'mr': 'Mr.',
-          'mrs': 'Mrs.'
+          'mrs': 'Mrs.',
+          'ms': 'Ms.',
+          'miss': 'Miss'
         }
         greeting = `Dear ${salutationMap[data.recipientSalutation] || ''} ${data.recipientName}`
       } else {
