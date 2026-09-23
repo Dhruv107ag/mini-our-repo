@@ -35,7 +35,7 @@ interface ComponentRequest {
   mentor_faculty_id: number | null
   purpose: string | null
   return_date: string | null
-  status: 'pending_faculty' | 'pending_lab_staff' | 'pending_hod' | 'approved' | 'rejected'
+  status: 'pending_faculty' | 'pending_lab_staff' | 'pending_lab_coordinator' | 'pending_hod' | 'approved' | 'rejected'
   faculty_approver_id: number | null
   faculty_approved_at: string | null
   faculty_remarks: string | null
@@ -64,9 +64,15 @@ interface ComponentRequest {
   updated_at: string
   lab_name: string
   highest_approval_authority?: 'hod' | 'lab_coordinator'
+  component_highest_approval_authority?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod'
   faculty_name?: string | null
   lab_staff_name?: string | null
+  lab_coordinator_name?: string | null
+  lab_coordinator_approver_id?: number | null
+  lab_coordinator_approved_at?: string | null
+  lab_coordinator_remarks?: string | null
   hod_name?: string | null
+  final_approver_role?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod' | null
   items: ComponentRequestItem[]
 }
 
@@ -209,12 +215,14 @@ export default function MyComponentRequestsPage() {
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>
       case 'pending_hod':
-        return <Badge variant="outline">Pending {request?.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD'}</Badge>
+        return <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">Pending HOD</Badge>
+      case 'pending_lab_coordinator':
+        return <Badge variant="outline" className="border-indigo-300 text-indigo-700 bg-indigo-50">Pending Lab Coordinator</Badge>
       case 'pending_lab_staff':
-        return <Badge variant="outline">Pending Lab Staff</Badge>
+        return <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">Pending Lab Staff</Badge>
       case 'pending_faculty':
       default:
-        return <Badge variant="secondary">Pending Faculty</Badge>
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Pending Faculty</Badge>
     }
   }
 
@@ -228,24 +236,36 @@ export default function MyComponentRequestsPage() {
     )
   }
 
-  function getStepState(req: ComponentRequest, step: 'faculty'|'staff'|'hod'|'final') : 'completed'|'pending'|'waiting'|'rejected' {
+  function getStepState(req: ComponentRequest, step: 'faculty'|'staff'|'coordinator'|'hod'|'final') : 'completed'|'pending'|'waiting'|'rejected' {
     const status: any = req.status
-    if (status === 'rejected') return 'rejected'
+    const auth = req.component_highest_approval_authority || 'hod'
+
+    if (status === 'rejected') {
+      if (step === 'faculty' && !req.faculty_approved_at) return 'rejected'
+      if (step === 'staff' && req.faculty_approved_at && !req.lab_staff_approved_at) return 'rejected'
+      if (step === 'coordinator' && req.lab_staff_approved_at && !req.lab_coordinator_approved_at) return 'rejected'
+      if (step === 'hod' && (req.lab_coordinator_approved_at || req.lab_staff_approved_at) && !req.hod_approved_at) return 'rejected'
+      if (step === 'final') return 'rejected'
+      return 'waiting'
+    }
     if (step === 'faculty') {
       if (status === 'pending_faculty') return 'pending'
-      if (['pending_lab_staff','pending_hod','approved'].includes(status)) return 'completed'
+      if (req.faculty_approved_at || ['pending_lab_staff','pending_lab_coordinator','pending_hod','approved'].includes(status)) return 'completed'
       return 'waiting'
     }
     if (step === 'staff') {
       if (status === 'pending_lab_staff') return 'pending'
-      if (['pending_hod','approved'].includes(status)) return 'completed'
-      if (status === 'pending_faculty') return 'waiting'
+      if (req.lab_staff_approved_at || ['pending_lab_coordinator','pending_hod','approved'].includes(status)) return 'completed'
+      return 'waiting'
+    }
+    if (step === 'coordinator') {
+      if (status === 'pending_lab_coordinator') return 'pending'
+      if (req.lab_coordinator_approved_at || ['pending_hod','approved'].includes(status)) return 'completed'
       return 'waiting'
     }
     if (step === 'hod') {
       if (status === 'pending_hod') return 'pending'
-      if (status === 'approved') return 'completed'
-      if (['pending_faculty','pending_lab_staff'].includes(status)) return 'waiting'
+      if (req.hod_approved_at || (status === 'approved' && auth === 'hod')) return 'completed'
       return 'waiting'
     }
     // final
@@ -257,7 +277,7 @@ export default function MyComponentRequestsPage() {
   // Filter requests based on active tab
   const filteredRequests = useMemo(() => {
     if (activeTab === 'all') return requests
-    if (activeTab === 'pending') return requests.filter(r => ['pending_faculty', 'pending_lab_staff', 'pending_hod'].includes(r.status))
+    if (activeTab === 'pending') return requests.filter(r => ['pending_faculty', 'pending_lab_staff', 'pending_lab_coordinator', 'pending_hod'].includes(r.status))
     if (activeTab === 'approved') return requests.filter(r => r.status === 'approved' && !r.issued_at)
     if (activeTab === 'issued') return requests.filter(r => r.issued_at && !r.returned_at)
     if (activeTab === 'returned') return requests.filter(r => r.returned_at !== null)
@@ -268,7 +288,7 @@ export default function MyComponentRequestsPage() {
   // Calculate counts for badges
   const counts = useMemo(() => ({
     all: requests.length,
-    pending: requests.filter(r => ['pending_faculty', 'pending_lab_staff', 'pending_hod'].includes(r.status)).length,
+    pending: requests.filter(r => ['pending_faculty', 'pending_lab_staff', 'pending_lab_coordinator', 'pending_hod'].includes(r.status)).length,
     approved: requests.filter(r => r.status === 'approved' && !r.issued_at).length,
     issued: requests.filter(r => r.issued_at && !r.returned_at).length,
     returned: requests.filter(r => r.returned_at !== null).length,
@@ -427,16 +447,27 @@ export default function MyComponentRequestsPage() {
                             <StepCircle state={getStepState(req,'faculty')}><User className="h-5 w-5"/></StepCircle>
                             <div className="text-xs text-center"><div className="font-medium">Faculty Recommendation</div><div className="text-gray-500">{req.faculty_approved_at ? new Date(req.faculty_approved_at).toLocaleDateString() : ''}</div></div>
                           </div>
-                          {/* Staff */}
-                          <div className="flex flex-col items-center space-y-1 relative z-10">
-                            <StepCircle state={getStepState(req,'staff')}><Users className="h-5 w-5"/></StepCircle>
-                            <div className="text-xs text-center"><div className="font-medium">Lab Staff Recommendation</div><div className="text-gray-500">{req.lab_staff_approved_at ? new Date(req.lab_staff_approved_at).toLocaleDateString() : ''}</div></div>
-                          </div>
-                          {/* HOD/Lab Coordinator */}
-                          <div className="flex flex-col items-center space-y-1 relative z-10">
-                            <StepCircle state={getStepState(req,'hod')}><Building className="h-5 w-5"/></StepCircle>
-                            <div className="text-xs text-center"><div className="font-medium">{req.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD'} Approval</div><div className="text-gray-500">{req.hod_approved_at ? new Date(req.hod_approved_at).toLocaleDateString() : ''}</div></div>
-                          </div>
+                          {/* Staff (only if authority is lab_staff, lab_coordinator, or hod) */}
+                          {(!req.component_highest_approval_authority || req.component_highest_approval_authority !== 'faculty') && (
+                            <div className="flex flex-col items-center space-y-1 relative z-10">
+                              <StepCircle state={getStepState(req,'staff')}><Users className="h-5 w-5"/></StepCircle>
+                              <div className="text-xs text-center"><div className="font-medium">Lab Staff Review</div><div className="text-gray-500">{req.lab_staff_approved_at ? new Date(req.lab_staff_approved_at).toLocaleDateString() : ''}</div></div>
+                            </div>
+                          )}
+                          {/* Lab Coordinator (only if authority is lab_coordinator or hod) */}
+                          {(!req.component_highest_approval_authority || ['lab_coordinator', 'hod'].includes(req.component_highest_approval_authority)) && (
+                            <div className="flex flex-col items-center space-y-1 relative z-10">
+                              <StepCircle state={getStepState(req,'coordinator')}><Building className="h-5 w-5"/></StepCircle>
+                              <div className="text-xs text-center"><div className="font-medium">Lab Coordinator Review</div><div className="text-gray-500">{req.lab_coordinator_approved_at ? new Date(req.lab_coordinator_approved_at).toLocaleDateString() : ''}</div></div>
+                            </div>
+                          )}
+                          {/* HOD (only if authority is hod) */}
+                          {(!req.component_highest_approval_authority || req.component_highest_approval_authority === 'hod') && (
+                            <div className="flex flex-col items-center space-y-1 relative z-10">
+                              <StepCircle state={getStepState(req,'hod')}><Building className="h-5 w-5"/></StepCircle>
+                              <div className="text-xs text-center"><div className="font-medium">HOD Review</div><div className="text-gray-500">{req.hod_approved_at ? new Date(req.hod_approved_at).toLocaleDateString() : ''}</div></div>
+                            </div>
+                          )}
                           {/* Final */}
                           <div className="flex flex-col items-center space-y-1 relative z-10">
                             {req.status === 'approved' ? (
@@ -452,11 +483,12 @@ export default function MyComponentRequestsPage() {
                       </div>
 
                       {/* Remarks */}
-                      {(req.faculty_remarks || req.lab_staff_remarks || req.hod_remarks || req.return_remarks || req.rejection_reason) && (
+                      {(req.faculty_remarks || req.lab_staff_remarks || req.lab_coordinator_remarks || req.hod_remarks || req.return_remarks || req.rejection_reason) && (
                         <div className="space-y-2">
                           <h4 className="text-sm font-medium">Remarks</h4>
                           {req.faculty_remarks && <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-blue-300"><span className="font-medium">Faculty Recommendation:</span> {req.faculty_remarks}</div>}
                           {req.lab_staff_remarks && <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-blue-300"><span className="font-medium">Lab Staff Recommendation:</span> {req.lab_staff_remarks}</div>}
+                          {req.lab_coordinator_remarks && <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-blue-300"><span className="font-medium">Lab Coordinator:</span> {req.lab_coordinator_remarks}</div>}
                           {req.hod_remarks && <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-blue-300"><span className="font-medium">HOD Approval:</span> {req.hod_remarks}</div>}
                           {req.return_remarks && <div className="text-xs p-2 bg-green-50 rounded border-l-2 border-green-300"><span className="font-medium">Return Approval:</span> {req.return_remarks}</div>}
                           {req.rejection_reason && <div className="text-xs p-2 bg-red-50 rounded border-l-2 border-red-300"><span className="font-medium">Rejection:</span> {req.rejection_reason}</div>}
@@ -467,7 +499,7 @@ export default function MyComponentRequestsPage() {
                 </Dialog>
 
                 {/* Withdraw Button - Show if pending (any stage) and not yet issued */}
-                {(req.status === 'pending_faculty' || req.status === 'pending_lab_staff' || req.status === 'pending_hod') && !req.issued_at && (
+                {['pending_faculty', 'pending_lab_staff', 'pending_lab_coordinator', 'pending_hod'].includes(req.status) && !req.issued_at && (
                   <Button 
                     variant="outline" 
                     size="sm" 

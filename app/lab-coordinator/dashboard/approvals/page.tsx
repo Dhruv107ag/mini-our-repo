@@ -712,7 +712,8 @@ export default function LabCoordinatorApprovePage() {
       }
       if (step === 'Lab Coordinator Review') {
         if (request.lab_coordinator_approved_at) return 'completed'
-        if (request.status === 'pending_hod') return 'pending'
+        if (request.status === 'pending_lab_coordinator') return 'pending'
+        if (request.status === 'pending_hod' && request.highest_approval_authority === 'lab_coordinator') return 'pending'
         if (!request.lab_staff_approved_at) return 'waiting'
         return 'waiting'
       }
@@ -728,7 +729,7 @@ export default function LabCoordinatorApprovePage() {
     const loadAll = async () => {
       setLoading(true)
       try {
-        const res = await fetch('/api/hod/component-requests', { cache: 'no-store' })
+        const res = await fetch('/api/lab-coordinator/component-requests', { cache: 'no-store' })
         const text = await res.text()
         if (!res.ok) throw new Error((() => { try { return JSON.parse(text)?.error } catch { return text } })() || 'Failed')
         const data = JSON.parse(text)
@@ -742,14 +743,18 @@ export default function LabCoordinatorApprovePage() {
 
     useEffect(() => { loadAll() }, [])
 
+    const isPendingForCoordinator = (r: any) => {
+      return r.status === 'pending_lab_coordinator' || (r.status === 'pending_hod' && r.highest_approval_authority === 'lab_coordinator')
+    }
+
     const filtered = useMemo(() => {
-      if (activeTab === 'pending') return all.filter(r => r.status === 'pending_hod')
+      if (activeTab === 'pending') return all.filter(isPendingForCoordinator)
       if (activeTab === 'approved') return all.filter(r => r.status === 'approved')
       return all.filter(r => r.status === 'rejected')
     }, [all, activeTab])
 
     const counts = useMemo(() => ({
-      pending: all.filter(r => r.status === 'pending_hod').length,
+      pending: all.filter(isPendingForCoordinator).length,
       approved: all.filter(r => r.status === 'approved').length,
       rejected: all.filter(r => r.status === 'rejected').length,
     }), [all])
@@ -768,7 +773,7 @@ export default function LabCoordinatorApprovePage() {
         // Mark as processing
         setProcessingIds(prev => new Set(prev).add(id))
         
-        const res = await fetch(`/api/hod/component-requests/${id}/action`, {
+        const res = await fetch(`/api/lab-coordinator/component-requests/${id}/action`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, remarks: remarks[id] || null })
@@ -776,7 +781,7 @@ export default function LabCoordinatorApprovePage() {
         const text = await res.text()
         if (!res.ok) throw new Error((() => { try { return JSON.parse(text)?.error } catch { return text } })() || 'Failed')
         const successMessage = action === 'approve' 
-          ? '✓ Component request approved successfully! The request is now approved and the requester has been notified.'
+          ? '✓ Component request processed successfully!'
           : '✓ Component request rejected successfully. The requester has been notified with your remarks.'
         setSuccessDialog({ open: true, message: successMessage })
         setRemarks(prev => { const p = { ...prev }; delete p[id]; return p })
@@ -785,7 +790,6 @@ export default function LabCoordinatorApprovePage() {
       } catch (e: any) {
         toast({ title: 'Action failed', description: e?.message || 'Could not update request', variant: 'destructive' })
       } finally {
-        // Remove from processing
         setProcessingIds(prev => {
           const newSet = new Set(prev)
           newSet.delete(id)
@@ -798,7 +802,8 @@ export default function LabCoordinatorApprovePage() {
       switch (status) {
         case 'pending_faculty': return <Badge className="bg-orange-100 text-orange-800" variant="secondary">Pending Faculty</Badge>
         case 'pending_lab_staff': return <Badge className="bg-blue-100 text-blue-800" variant="secondary">Pending Lab Staff</Badge>
-        case 'pending_hod': return <Badge className="bg-purple-100 text-purple-800" variant="secondary">Pending Lab Coordinator</Badge>
+        case 'pending_lab_coordinator': return <Badge className="bg-indigo-100 text-indigo-800" variant="secondary">Pending Lab Coordinator</Badge>
+        case 'pending_hod': return <Badge className="bg-purple-100 text-purple-800" variant="secondary">Pending HOD</Badge>
         case 'approved': return <Badge className="bg-green-100 text-green-800" variant="secondary">Approved</Badge>
         case 'rejected': return <Badge variant="destructive">Rejected</Badge>
         default: return <Badge variant="outline">{status}</Badge>

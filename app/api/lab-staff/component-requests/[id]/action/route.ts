@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { Database } from "@/lib/database"
+import { Database, dbOperations } from "@/lib/database"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { sendEmail, emailTemplates } from "@/lib/notifications"
 import { logComponentActivity, getUserInfoForLogging } from "@/lib/activity-logger"
@@ -11,38 +11,7 @@ import { logComponentActivity, getUserInfoForLogging } from "@/lib/activity-logg
 const db = Database.getInstance()
 
 async function ensureSchema() {
-  await db.query(`CREATE TABLE IF NOT EXISTS component_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    lab_id INT NOT NULL,
-    requester_id INT NOT NULL,
-    initiator_role ENUM('student','faculty') NOT NULL,
-    mentor_faculty_id INT NULL,
-    purpose VARCHAR(1000) NULL,
-    status ENUM('pending_faculty','pending_lab_staff','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_lab_staff',
-    faculty_approver_id INT NULL,
-    faculty_approved_at DATETIME NULL,
-    faculty_remarks VARCHAR(1000) NULL,
-    lab_staff_approver_id INT NULL,
-    lab_staff_approved_at DATETIME NULL,
-    lab_staff_remarks VARCHAR(1000) NULL,
-    hod_approver_id INT NULL,
-    hod_approved_at DATETIME NULL,
-    hod_remarks VARCHAR(1000) NULL,
-    rejected_by_id INT NULL,
-    rejected_at DATETIME NULL,
-    rejection_reason VARCHAR(1000) NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (lab_id), INDEX (requester_id), INDEX (status)
-  )`)
-  await db.query(`CREATE TABLE IF NOT EXISTS component_request_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    request_id INT NOT NULL,
-    component_id INT NOT NULL,
-    quantity_requested INT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX (request_id), INDEX (component_id)
-  )`)
+  await dbOperations.runLightMigrations()
 }
 
 export async function POST(
@@ -84,12 +53,43 @@ export async function POST(
     }
 
     if (action === 'approve') {
-      // Move to pending_hod
+      // Determine department's component approval authority
+      const deptRes = await db.query(
+        `SELECT d.component_highest_approval_authority, d.lab_coordinator_id, coord.email as coordinator_email,
+                coord.name as coordinator_name, coord.salutation as coordinator_salutation,
+                d.hod_email, hod.name as hod_name, hod.salutation as hod_salutation
+         FROM labs l
+         JOIN departments d ON d.id = l.department_id
+         LEFT JOIN users coord ON coord.id = d.lab_coordinator_id
+         LEFT JOIN users hod ON hod.id = d.hod_id
+         WHERE l.id = ?`,
+        [request.lab_id]
+      )
+      const dept = deptRes.rows[0]
+      const compAuth = dept?.component_highest_approval_authority || 'hod'
+
+      let nextStatus = 'pending_lab_coordinator'
+      let finalRole: string | null = null
+
+      if (compAuth === 'lab_staff') {
+        nextStatus = 'approved'
+        finalRole = 'lab_staff'
+      } else if (compAuth === 'lab_coordinator' || compAuth === 'hod') {
+        if (dept?.lab_coordinator_id) {
+          nextStatus = 'pending_lab_coordinator'
+        } else {
+          // If no coordinator assigned, fallback to HOD if HOD authority, or approve if coordinator was authority
+          nextStatus = compAuth === 'hod' ? 'pending_hod' : 'approved'
+          if (nextStatus === 'approved') finalRole = 'lab_staff'
+        }
+      }
+
       await db.query(
         `UPDATE component_requests
-         SET status = 'pending_hod', lab_staff_approver_id = ?, lab_staff_approved_at = NOW(), lab_staff_remarks = ?
+         SET status = ?, lab_staff_approver_id = ?, lab_staff_approved_at = NOW(), lab_staff_remarks = ?,
+             final_approver_role = COALESCE(?, final_approver_role)
          WHERE id = ? AND status = 'pending_lab_staff'`,
-        [Number(user.userId), remarks, requestId]
+        [nextStatus, Number(user.userId), remarks, finalRole, requestId]
       )
       
       // Send emails
@@ -97,44 +97,24 @@ export async function POST(
         `SELECT r.*, l.name as lab_name, l.department_id,
                 u.name as requester_name, u.email as requester_email, u.salutation as requester_salutation,
                 ls.name as lab_staff_name, ls.salutation as lab_staff_salutation,
-                d.highest_approval_authority,
-                CASE 
-                  WHEN d.highest_approval_authority = 'lab_coordinator' AND d.lab_coordinator_id IS NOT NULL 
-                  THEN coord.email
-                  ELSE d.hod_email
-                END as approver_email,
-                CASE 
-                  WHEN d.highest_approval_authority = 'lab_coordinator' AND d.lab_coordinator_id IS NOT NULL 
-                  THEN coord.name
-                  ELSE hod.name
-                END as approver_name,
-                CASE 
-                  WHEN d.highest_approval_authority = 'lab_coordinator' AND d.lab_coordinator_id IS NOT NULL 
-                  THEN coord.salutation
-                  ELSE hod.salutation
-                END as approver_salutation,
-                CASE 
-                  WHEN d.highest_approval_authority = 'lab_coordinator' AND d.lab_coordinator_id IS NOT NULL 
-                  THEN 'Lab Coordinator'
-                  ELSE 'HOD'
-                END as approver_role
+                COALESCE(d.component_highest_approval_authority, 'hod') as component_highest_approval_authority
          FROM component_requests r
          JOIN labs l ON l.id = r.lab_id
          JOIN users u ON u.id = r.requester_id
          LEFT JOIN users ls ON ls.id = ?
          LEFT JOIN departments d ON d.id = l.department_id
-         LEFT JOIN users hod ON hod.id = d.hod_id
-         LEFT JOIN users coord ON coord.id = d.lab_coordinator_id
          WHERE r.id = ?`,
         [Number(user.userId), requestId]
       )
       const requestDetails = details.rows[0]
       
-      // Note: Do NOT email the requester at this stage - this is just a recommendation
-      // The requester will be emailed when the component is actually issued
-      
-      // Email to HOD or Lab Coordinator (forwarding the approved request)
-      if (requestDetails && requestDetails.approver_email) {
+      // Email to Lab Coordinator or HOD if forwarded
+      const forwardEmail = nextStatus === 'pending_lab_coordinator' ? dept?.coordinator_email : (nextStatus === 'pending_hod' ? dept?.hod_email : null)
+      const forwardName = nextStatus === 'pending_lab_coordinator' ? dept?.coordinator_name : (nextStatus === 'pending_hod' ? dept?.hod_name : '')
+      const forwardSalutation = nextStatus === 'pending_lab_coordinator' ? dept?.coordinator_salutation : (nextStatus === 'pending_hod' ? dept?.hod_salutation : 'none')
+      const forwardRole = nextStatus === 'pending_lab_coordinator' ? 'Lab Coordinator' : 'HOD'
+
+      if (forwardEmail) {
         const itemsDetails = await db.query(
           `SELECT c.name, cri.quantity_requested as quantity
            FROM component_request_items cri
@@ -143,22 +123,22 @@ export async function POST(
           [requestId]
         )
         const emailData = emailTemplates.componentRequestForwarded({
-          recipientRole: requestDetails.approver_role || 'HOD',
-          recipientName: requestDetails.approver_name || '',
-          recipientSalutation: requestDetails.approver_salutation || 'none',
-          requesterName: requestDetails.requester_name,
-          requesterSalutation: requestDetails.requester_salutation,
-          requesterRole: requestDetails.initiator_role === 'faculty' ? 'Faculty' : 'Student',
-          approverName: requestDetails.lab_staff_name || 'Lab Staff',
-          approverSalutation: requestDetails.lab_staff_salutation || 'none',
+          recipientRole: forwardRole,
+          recipientName: forwardName || '',
+          recipientSalutation: forwardSalutation || 'none',
+          requesterName: requestDetails?.requester_name,
+          requesterSalutation: requestDetails?.requester_salutation,
+          requesterRole: requestDetails?.initiator_role === 'faculty' ? 'Faculty' : 'Student',
+          approverName: requestDetails?.lab_staff_name || 'Lab Staff',
+          approverSalutation: requestDetails?.lab_staff_salutation || 'none',
           approverRole: 'Lab Staff',
-          labName: requestDetails.lab_name,
-          purpose: requestDetails.purpose || 'Not specified',
+          labName: requestDetails?.lab_name,
+          purpose: requestDetails?.purpose || 'Not specified',
           items: itemsDetails.rows,
-          returnDate: requestDetails.return_date,
+          returnDate: requestDetails?.return_date,
           requestId: requestId
         })
-        await sendEmail({ to: requestDetails.approver_email, ...emailData }).catch(err => console.error('Email failed:', err))
+        await sendEmail({ to: forwardEmail, ...emailData }).catch(err => console.error('Email failed:', err))
       }
       
       // Log the activity

@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { User, Lock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { User, Lock, AlertCircle, CheckCircle2, Sliders, ShieldCheck, ArrowRight, Check } from "lucide-react"
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
@@ -24,6 +25,13 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
+  // Department Component Approval Authority State
+  const [department, setDepartment] = useState<any>(null)
+  const [deptLoading, setDeptLoading] = useState(true)
+  const [compAuthority, setCompAuthority] = useState<'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod'>('hod')
+  const [deptSaveLoading, setDeptSaveLoading] = useState(false)
+  const [deptMessage, setDeptMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
   useEffect(() => {
     const userData = localStorage.getItem("user")
     if (userData) {
@@ -31,7 +39,53 @@ export default function SettingsPage() {
       setUser(parsedUser)
       setNewName(parsedUser.name || "")
     }
+    loadDeptSettings()
   }, [])
+
+  const loadDeptSettings = async () => {
+    setDeptLoading(true)
+    try {
+      const res = await fetch("/api/hod/approval-settings", { cache: "no-store" })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.department) {
+          setDepartment(data.department)
+          setCompAuthority(data.department.component_highest_approval_authority || 'hod')
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load department approval settings:", e)
+    } finally {
+      setDeptLoading(false)
+    }
+  }
+
+  const handleSaveApprovalAuthority = async () => {
+    setDeptSaveLoading(true)
+    setDeptMessage(null)
+    try {
+      const res = await fetch("/api/hod/approval-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          component_highest_approval_authority: compAuthority
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setDeptMessage({ type: 'success', text: "Component issue approval authority updated successfully!" })
+        if (data.department) {
+          setDepartment(data.department)
+        }
+      } else {
+        setDeptMessage({ type: 'error', text: data.error || "Failed to update approval authority" })
+      }
+    } catch (e: any) {
+      setDeptMessage({ type: 'error', text: "An error occurred while saving settings" })
+    } finally {
+      setDeptSaveLoading(false)
+    }
+  }
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,6 +167,203 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6">
+        {/* Component Approval Workflow Configuration */}
+        <Card className="border-primary/20 shadow-sm">
+          <CardHeader className="bg-muted/30 border-b pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  Component Issue Approval Authority (Final Call)
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Configure the approval chain for component issue requests and decide who takes the final approval call.
+                </CardDescription>
+              </div>
+              {department && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="text-xs bg-background">
+                    Dept: {department.name} ({department.code})
+                  </Badge>
+                  {department.lab_coordinator_name && (
+                    <Badge variant="secondary" className="text-xs">
+                      Coordinator: {department.lab_coordinator_name}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            {deptLoading ? (
+              <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent mr-2" />
+                Loading workflow configuration...
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label className="text-sm font-semibold mb-2 block">Select Final Approval Authority</Label>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    The request will follow the sequence until the chosen final authority gives approval. Once approved by the final authority, the request is marked <strong>Approved</strong> and Lab Staff can issue the items.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Option 1: Faculty */}
+                    <div
+                      onClick={() => setCompAuthority('faculty')}
+                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        compAuthority === 'faculty'
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-muted-foreground/40 bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="font-semibold text-sm">Faculty Mentor</div>
+                        {compAuthority === 'faculty' && <Check className="h-4 w-4 text-primary font-bold" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Flow terminates early: Once mentor faculty approves, the request is immediately approved.
+                      </p>
+                      <Badge variant="outline" className="mt-2 w-fit text-[10px] bg-background">1-Step Approval</Badge>
+                    </div>
+
+                    {/* Option 2: Lab Staff */}
+                    <div
+                      onClick={() => setCompAuthority('lab_staff')}
+                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        compAuthority === 'lab_staff'
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-muted-foreground/40 bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="font-semibold text-sm">Lab Staff</div>
+                        {compAuthority === 'lab_staff' && <Check className="h-4 w-4 text-primary font-bold" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Student &rarr; Faculty &rarr; Lab Staff. When Lab Staff approves, request is approved and issued.
+                      </p>
+                      <Badge variant="outline" className="mt-2 w-fit text-[10px] bg-background">2-Step Approval</Badge>
+                    </div>
+
+                    {/* Option 3: Lab Coordinator */}
+                    <div
+                      onClick={() => setCompAuthority('lab_coordinator')}
+                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        compAuthority === 'lab_coordinator'
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-muted-foreground/40 bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="font-semibold text-sm">Lab Coordinator</div>
+                        {compAuthority === 'lab_coordinator' && <Check className="h-4 w-4 text-primary font-bold" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Student &rarr; Faculty &rarr; Lab Staff &rarr; Lab Coordinator. Coordinator gives final approval.
+                      </p>
+                      <Badge variant="outline" className="mt-2 w-fit text-[10px] bg-background">3-Step Approval</Badge>
+                    </div>
+
+                    {/* Option 4: HOD */}
+                    <div
+                      onClick={() => setCompAuthority('hod')}
+                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        compAuthority === 'hod'
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:border-muted-foreground/40 bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="font-semibold text-sm">HOD (Head of Department)</div>
+                        {compAuthority === 'hod' && <Check className="h-4 w-4 text-primary font-bold" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Full hierarchy: Student &rarr; Faculty &rarr; Lab Staff &rarr; Lab Coordinator &rarr; HOD. HOD takes final call.
+                      </p>
+                      <Badge variant="default" className="mt-2 w-fit text-[10px]">Default Full Chain</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visual Pipeline Progression Preview */}
+                <div className="bg-muted/40 p-4 rounded-lg border border-dashed">
+                  <div className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <Sliders className="h-3.5 w-3.5" />
+                    LIVE WORKFLOW PREVIEW FOR SELECTED AUTHORITY
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="px-2.5 py-1 rounded bg-secondary text-secondary-foreground font-medium">Student Requests</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className={`px-2.5 py-1 rounded font-medium border ${
+                      compAuthority === 'faculty' 
+                        ? 'bg-green-100 border-green-500 text-green-800 font-semibold ring-2 ring-green-300' 
+                        : 'bg-card text-foreground'
+                    }`}>
+                      Faculty Review {compAuthority === 'faculty' && '★ Final Call'}
+                    </span>
+
+                    <ArrowRight className={`h-3.5 w-3.5 ${compAuthority === 'faculty' ? 'opacity-30' : 'text-muted-foreground'}`} />
+                    <span className={`px-2.5 py-1 rounded font-medium border ${
+                      compAuthority === 'faculty'
+                        ? 'opacity-40 line-through bg-muted text-muted-foreground'
+                        : compAuthority === 'lab_staff'
+                          ? 'bg-green-100 border-green-500 text-green-800 font-semibold ring-2 ring-green-300'
+                          : 'bg-card text-foreground'
+                    }`}>
+                      Lab Staff Review {compAuthority === 'lab_staff' && '★ Final Call'}
+                    </span>
+
+                    <ArrowRight className={`h-3.5 w-3.5 ${['faculty', 'lab_staff'].includes(compAuthority) ? 'opacity-30' : 'text-muted-foreground'}`} />
+                    <span className={`px-2.5 py-1 rounded font-medium border ${
+                      ['faculty', 'lab_staff'].includes(compAuthority)
+                        ? 'opacity-40 line-through bg-muted text-muted-foreground'
+                        : compAuthority === 'lab_coordinator'
+                          ? 'bg-green-100 border-green-500 text-green-800 font-semibold ring-2 ring-green-300'
+                          : 'bg-card text-foreground'
+                    }`}>
+                      Lab Coordinator Review {compAuthority === 'lab_coordinator' && '★ Final Call'}
+                    </span>
+
+                    <ArrowRight className={`h-3.5 w-3.5 ${compAuthority !== 'hod' ? 'opacity-30' : 'text-muted-foreground'}`} />
+                    <span className={`px-2.5 py-1 rounded font-medium border ${
+                      compAuthority !== 'hod'
+                        ? 'opacity-40 line-through bg-muted text-muted-foreground'
+                        : 'bg-green-100 border-green-500 text-green-800 font-semibold ring-2 ring-green-300'
+                    }`}>
+                      HOD Approval {compAuthority === 'hod' && '★ Final Call'}
+                    </span>
+
+                    <ArrowRight className="h-3.5 w-3.5 text-primary" />
+                    <span className="px-2.5 py-1 rounded bg-green-600 text-white font-bold">
+                      ✓ Approved & Issued
+                    </span>
+                  </div>
+                </div>
+
+                {deptMessage && (
+                  <Alert variant={deptMessage.type === 'error' ? 'destructive' : 'default'}>
+                    {deptMessage.type === 'success' ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4" />
+                    )}
+                    <AlertDescription>{deptMessage.text}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  onClick={handleSaveApprovalAuthority} 
+                  disabled={deptSaveLoading || (department && department.component_highest_approval_authority === compAuthority)}
+                >
+                  {deptSaveLoading ? "Saving..." : "Save Approval Authority Setting"}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Profile Settings */}
         <Card>
           <CardHeader>

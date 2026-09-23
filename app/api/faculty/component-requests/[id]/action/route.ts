@@ -3,37 +3,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { Database } from "@/lib/database"
+import { Database, dbOperations } from "@/lib/database"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { sendEmail, emailTemplates } from "@/lib/notifications"
 
 const db = Database.getInstance()
 
 async function ensureSchema() {
-  await db.query(`CREATE TABLE IF NOT EXISTS component_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    lab_id INT NOT NULL,
-    requester_id INT NOT NULL,
-    initiator_role ENUM('student','faculty') NOT NULL,
-    mentor_faculty_id INT NULL,
-    purpose VARCHAR(1000) NULL,
-    status ENUM('pending_faculty','pending_lab_staff','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_faculty',
-    faculty_approver_id INT NULL,
-    faculty_approved_at DATETIME NULL,
-    faculty_remarks VARCHAR(1000) NULL,
-    lab_staff_approver_id INT NULL,
-    lab_staff_approved_at DATETIME NULL,
-    lab_staff_remarks VARCHAR(1000) NULL,
-    hod_approver_id INT NULL,
-    hod_approved_at DATETIME NULL,
-    hod_remarks VARCHAR(1000) NULL,
-    rejected_by_id INT NULL,
-    rejected_at DATETIME NULL,
-    rejection_reason VARCHAR(1000) NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (lab_id), INDEX (requester_id), INDEX (status)
-  )`)
+  await dbOperations.runLightMigrations()
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -59,9 +36,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     if (action === 'approve') {
+      // Check department's component approval authority
+      const deptRes = await db.query(
+        `SELECT d.component_highest_approval_authority 
+         FROM labs l 
+         JOIN departments d ON d.id = l.department_id 
+         WHERE l.id = ?`,
+        [request.lab_id]
+      )
+      const compAuth = deptRes.rows[0]?.component_highest_approval_authority || 'hod'
+      const isFinal = compAuth === 'faculty'
+      const nextStatus = isFinal ? 'approved' : 'pending_lab_staff'
+      const finalRole = isFinal ? 'faculty' : null
+
       await db.query(
-        `UPDATE component_requests SET status = 'pending_lab_staff', faculty_approver_id = ?, faculty_approved_at = NOW(), faculty_remarks = ? WHERE id = ? AND status = 'pending_faculty'`,
-        [Number(user.userId), remarks, requestId]
+        `UPDATE component_requests 
+         SET status = ?, faculty_approver_id = ?, faculty_approved_at = NOW(), faculty_remarks = ?, final_approver_role = COALESCE(?, final_approver_role) 
+         WHERE id = ? AND status = 'pending_faculty'`,
+        [nextStatus, Number(user.userId), remarks, finalRole, requestId]
       )
       
       // Send email to student and lab staff
@@ -78,12 +70,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
          WHERE r.id = ?`,
         [Number(user.userId), requestId]
       )
-      const req = details.rows[0]
+      const reqDetails = details.rows[0]
       
-      // Note: No email to requester at this stage - only when components are issued or request is rejected
-      
-      // Email to lab staff (forwarding the approved request)
-      if (req && req.lab_staff_email) {
+      // Email to lab staff (forwarding or requesting issue)
+      if (reqDetails && reqDetails.lab_staff_email) {
         const itemsDetails = await db.query(
           `SELECT c.name, cri.quantity_requested as quantity
            FROM component_request_items cri
@@ -92,10 +82,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           [requestId]
         )
         
-        // Get lab staff details with salutation
         const staffDetails = await db.query(
           `SELECT name, salutation FROM users WHERE id = ?`,
-          [req.lab_staff_id]
+          [reqDetails.lab_staff_id]
         )
         const labStaff = staffDetails.rows[0]
         
@@ -103,19 +92,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           recipientRole: 'Lab Staff',
           recipientName: labStaff?.name,
           recipientSalutation: labStaff?.salutation,
-          requesterName: req.requester_name,
-          requesterSalutation: req.requester_salutation,
+          requesterName: reqDetails.requester_name,
+          requesterSalutation: reqDetails.requester_salutation,
           requesterRole: 'Student',
-          approverName: req.faculty_name || 'Faculty',
-          approverSalutation: req.faculty_salutation,
+          approverName: reqDetails.faculty_name || 'Faculty',
+          approverSalutation: reqDetails.faculty_salutation,
           approverRole: 'Faculty',
-          labName: req.lab_name,
-          purpose: req.purpose || 'Not specified',
+          labName: reqDetails.lab_name,
+          purpose: reqDetails.purpose || 'Not specified',
           items: itemsDetails.rows,
-          returnDate: req.return_date,
+          returnDate: reqDetails.return_date,
           requestId: requestId
         })
-        await sendEmail({ to: req.lab_staff_email, ...emailData }).catch(err => console.error('Email failed:', err))
+        await sendEmail({ to: reqDetails.lab_staff_email, ...emailData }).catch(err => console.error('Email failed:', err))
       }
       
       const sel = await db.query(`SELECT * FROM component_requests WHERE id = ?`, [requestId])

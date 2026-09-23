@@ -37,6 +37,7 @@ type Department = {
   hod_name?: string | null; 
   hod_email?: string | null;
   highest_approval_authority?: 'hod' | 'lab_coordinator' | null;
+  component_highest_approval_authority?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod' | null;
   lab_coordinator_id?: number | null;
   lab_coordinator_name?: string | null;
 }
@@ -162,6 +163,41 @@ export default function DepartmentAndLabManagementPage() {
         description: "Both HOD and Lab Coordinator have been notified via email.",
         duration: 5000,
         className: "bg-green-50 border-green-200",
+      })
+    } catch (e: any) {
+      toast({ title: "Update failed", description: e?.message || "", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateComponentApprovalAuthority = async (
+    departmentId: number, 
+    componentHighestApprovalAuthority: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod'
+  ) => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/departments", { 
+        method: "PATCH", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ departmentId, componentHighestApprovalAuthority }) 
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "Failed to update component approval authority")
+      
+      setDepartments((prev) => prev.map((d) => (
+        d.id === departmentId 
+          ? { 
+              ...d, 
+              component_highest_approval_authority: data.department.component_highest_approval_authority
+            } 
+          : d
+      )))
+      
+      toast({ 
+        title: "✅ Component Approval Authority Updated",
+        description: `Set to ${componentHighestApprovalAuthority.replace('_', ' ').toUpperCase()}`,
+        duration: 4000,
       })
     } catch (e: any) {
       toast({ title: "Update failed", description: e?.message || "", variant: "destructive" })
@@ -422,7 +458,8 @@ export default function DepartmentAndLabManagementPage() {
                     <TableHead>Code</TableHead>
                     <TableHead>HOD</TableHead>
                     <TableHead>Lab Coordinator</TableHead>
-                    <TableHead>Highest Approval Authority</TableHead>
+                    <TableHead>Booking Authority</TableHead>
+                    <TableHead>Component Authority</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -600,6 +637,24 @@ export default function DepartmentAndLabManagementPage() {
                             Assign both HOD and Lab Coordinator first
                           </p>
                         )}
+                      </TableCell>
+                      <TableCell className="min-w-48">
+                        <Select
+                          value={d.component_highest_approval_authority || "hod"}
+                          onValueChange={(v: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod') => {
+                            updateComponentApprovalAuthority(d.id, v)
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Component Authority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="faculty">Faculty (Direct)</SelectItem>
+                            <SelectItem value="lab_staff">Lab Staff</SelectItem>
+                            <SelectItem value="lab_coordinator">Lab Coordinator</SelectItem>
+                            <SelectItem value="hod">HOD (Full 5-tier)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex gap-2">

@@ -3,44 +3,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { Database } from "@/lib/database"
+import { Database, dbOperations } from "@/lib/database"
 import { verifyToken, hasRole } from "@/lib/auth"
 
 const db = Database.getInstance()
 
 async function ensureSchema() {
-  await db.query(`CREATE TABLE IF NOT EXISTS component_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    lab_id INT NOT NULL,
-    requester_id INT NOT NULL,
-    initiator_role ENUM('student','faculty') NOT NULL,
-    mentor_faculty_id INT NULL,
-    purpose VARCHAR(1000) NULL,
-    status ENUM('pending_faculty','pending_lab_staff','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_lab_staff',
-    faculty_approver_id INT NULL,
-    faculty_approved_at DATETIME NULL,
-    faculty_remarks VARCHAR(1000) NULL,
-    lab_staff_approver_id INT NULL,
-    lab_staff_approved_at DATETIME NULL,
-    lab_staff_remarks VARCHAR(1000) NULL,
-    hod_approver_id INT NULL,
-    hod_approved_at DATETIME NULL,
-    hod_remarks VARCHAR(1000) NULL,
-    rejected_by_id INT NULL,
-    rejected_at DATETIME NULL,
-    rejection_reason VARCHAR(1000) NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (lab_id), INDEX (requester_id), INDEX (status)
-  )`)
-  await db.query(`CREATE TABLE IF NOT EXISTS component_request_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    request_id INT NOT NULL,
-    component_id INT NOT NULL,
-    quantity_requested INT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX (request_id), INDEX (component_id)
-  )`)
+  await dbOperations.runLightMigrations()
 }
 
 export async function GET(req: NextRequest) {
@@ -78,7 +47,7 @@ export async function GET(req: NextRequest) {
     }
     const rows = await db.query(
       `SELECT r.*, l.name AS lab_name, l.department_id,
-              d.highest_approval_authority, d.lab_coordinator_id,
+              d.highest_approval_authority, d.component_highest_approval_authority, d.lab_coordinator_id,
               ureq.name AS requester_name, ureq.salutation AS requester_salutation,
               uf.name AS mentor_faculty_name, uf.salutation AS mentor_faculty_salutation,
               ul.name AS lab_staff_name,

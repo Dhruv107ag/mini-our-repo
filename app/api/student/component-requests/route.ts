@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { Database } from "@/lib/database"
+import { Database, dbOperations } from "@/lib/database"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { sendEmail, emailTemplates } from "@/lib/notifications"
 import { logComponentActivity, getUserInfoForLogging } from "@/lib/activity-logger"
@@ -11,6 +11,7 @@ import { logComponentActivity, getUserInfoForLogging } from "@/lib/activity-logg
 const db = Database.getInstance()
 
 async function ensureSchema() {
+  await dbOperations.runLightMigrations()
   // Requests master table
   await db.query(`CREATE TABLE IF NOT EXISTS component_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -20,16 +21,20 @@ async function ensureSchema() {
     mentor_faculty_id INT NULL,
     purpose VARCHAR(1000) NULL,
     return_date DATE NULL,
-    status ENUM('pending_faculty','pending_lab_staff','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_faculty',
+    status ENUM('pending_faculty','pending_lab_staff','pending_lab_coordinator','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_faculty',
     faculty_approver_id INT NULL,
     faculty_approved_at DATETIME NULL,
     faculty_remarks VARCHAR(1000) NULL,
     lab_staff_approver_id INT NULL,
     lab_staff_approved_at DATETIME NULL,
     lab_staff_remarks VARCHAR(1000) NULL,
+    lab_coordinator_approver_id INT NULL,
+    lab_coordinator_approved_at DATETIME NULL,
+    lab_coordinator_remarks VARCHAR(1000) NULL,
     hod_approver_id INT NULL,
     hod_approved_at DATETIME NULL,
     hod_remarks VARCHAR(1000) NULL,
+    final_approver_role ENUM('faculty','lab_staff','lab_coordinator','hod') NULL,
     issued_at DATETIME NULL,
     return_requested_at DATETIME NULL,
     returned_at DATETIME NULL,
@@ -65,14 +70,17 @@ export async function GET(req: NextRequest) {
     const rows = await db.query(
       `SELECT r.*, l.name AS lab_name,
               d.highest_approval_authority,
+              COALESCE(d.component_highest_approval_authority, 'hod') AS component_highest_approval_authority,
               uf.name AS faculty_name,
               ul.name AS lab_staff_name,
+              coord.name AS lab_coordinator_name,
               uh.name AS hod_name
        FROM component_requests r
        JOIN labs l ON l.id = r.lab_id
        LEFT JOIN departments d ON l.department_id = d.id
        LEFT JOIN users uf ON uf.id = r.mentor_faculty_id
        LEFT JOIN users ul ON ul.id = r.lab_staff_approver_id
+       LEFT JOIN users coord ON coord.id = r.lab_coordinator_approver_id
        LEFT JOIN users uh ON uh.id = r.hod_approver_id
        WHERE r.requester_id = ?
        ORDER BY r.created_at DESC`,

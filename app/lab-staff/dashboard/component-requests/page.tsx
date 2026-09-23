@@ -29,9 +29,13 @@ interface RequestItem {
   faculty_approved_at?: string | null
   lab_staff_remarks?: string | null
   lab_staff_approved_at?: string | null
+  lab_coordinator_remarks?: string | null
+  lab_coordinator_approved_at?: string | null
   hod_remarks?: string | null
   hod_approved_at?: string | null
   highest_approval_authority?: 'hod' | 'lab_coordinator'
+  component_highest_approval_authority?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod'
+  final_approver_role?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod' | null
   lab_coordinator_id?: number | null
   lab_coordinator_name?: string | null
   issued_at?: string | null
@@ -107,17 +111,21 @@ export default function LabStaffComponentRequestsPage() {
       if (request.lab_staff_approved_at) return 'completed'
       if (request.status === 'pending_lab_staff') return 'pending'
       if (request.status === 'rejected' && request.faculty_approved_at && !request.lab_staff_approved_at) return 'rejected'
-      if (!request.faculty_approved_at) return 'waiting'
+      if (!request.faculty_approved_at && request.initiator_role === 'student') return 'waiting'
+      return 'waiting'
+    }
+
+    if (step === 'Lab Coordinator Review') {
+      if (request.lab_coordinator_approved_at) return 'completed'
+      if (request.status === 'pending_lab_coordinator') return 'pending'
+      if (request.status === 'rejected' && request.lab_staff_approved_at && !request.lab_coordinator_approved_at) return 'rejected'
       return 'waiting'
     }
     
     if (step === 'HOD Review') {
-      // If request is approved, then HOD/Lab Coordinator step is completed
-      if (request.status === 'approved') return 'completed'
       if (request.hod_approved_at) return 'completed'
       if (request.status === 'pending_hod') return 'pending'
-      if (request.status === 'rejected' && request.lab_staff_approved_at && !request.hod_approved_at) return 'rejected'
-      if (!request.lab_staff_approved_at) return 'waiting'
+      if (request.status === 'rejected' && (request.lab_coordinator_approved_at || request.lab_staff_approved_at) && !request.hod_approved_at) return 'rejected'
       return 'waiting'
     }
     
@@ -319,7 +327,9 @@ export default function LabStaffComponentRequestsPage() {
 
   const badge = (status: string, highestApprovalAuthority?: 'hod' | 'lab_coordinator') => {
     switch (status) {
+      case 'pending_faculty': return <Badge className="bg-yellow-100 text-yellow-800" variant="secondary">Pending Faculty</Badge>
       case 'pending_lab_staff': return <Badge className="bg-orange-100 text-orange-800" variant="secondary">Pending Lab Staff</Badge>
+      case 'pending_lab_coordinator': return <Badge className="bg-purple-100 text-purple-800" variant="secondary">Pending Lab Coordinator</Badge>
       case 'pending_hod': 
         const label = highestApprovalAuthority === 'lab_coordinator' ? 'Pending Lab Coordinator' : 'Pending HOD'
         return <Badge className="bg-blue-100 text-blue-800" variant="secondary">{label}</Badge>
@@ -506,18 +516,32 @@ export default function LabStaffComponentRequestsPage() {
                     <div className="px-2">
                       <div className="flex items-center justify-between relative">
                         <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200"></div>
-                        {(r.initiator_role === 'faculty' ? [
-                          { name: 'Submitted', status: 'completed', icon: Clock },
-                          { name: 'Lab Staff', status: getStepStatus(r, 'Lab Staff Review'), icon: Users },
-                          { name: r.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD', status: getStepStatus(r, 'HOD Review'), icon: Building },
-                          { name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 }
-                        ] : [
-                          { name: 'Submitted', status: 'completed', icon: Clock },
-                          { name: 'Faculty', status: getStepStatus(r, 'Faculty Review'), icon: User },
-                          { name: 'Lab Staff', status: getStepStatus(r, 'Lab Staff Review'), icon: Users },
-                          { name: r.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD', status: getStepStatus(r, 'HOD Review'), icon: Building },
-                          { name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 }
-                        ]).map((step, index) => (
+                        {(() => {
+                          const auth = r.component_highest_approval_authority || 'hod'
+                          const steps: Array<{ name: string; status: 'completed' | 'pending' | 'rejected' | 'waiting'; icon: any }> = [
+                            { name: 'Submitted', status: 'completed', icon: Clock }
+                          ]
+                          if (r.initiator_role === 'student') {
+                            steps.push({ name: 'Faculty', status: getStepStatus(r, 'Faculty Review'), icon: User })
+                          }
+                          if (auth === 'faculty') {
+                            steps.push({ name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 })
+                            return steps
+                          }
+                          steps.push({ name: 'Lab Staff', status: getStepStatus(r, 'Lab Staff Review'), icon: Users })
+                          if (auth === 'lab_staff') {
+                            steps.push({ name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 })
+                            return steps
+                          }
+                          steps.push({ name: 'Lab Coordinator', status: getStepStatus(r, 'Lab Coordinator Review'), icon: Building })
+                          if (auth === 'lab_coordinator') {
+                            steps.push({ name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 })
+                            return steps
+                          }
+                          steps.push({ name: 'HOD', status: getStepStatus(r, 'HOD Review'), icon: Building })
+                          steps.push({ name: 'Final', status: getFinalApprovalStatus(r), icon: CheckCircle2 })
+                          return steps
+                        })().map((step, index) => (
                           <div key={index} className="flex flex-col items-center space-y-1 relative z-10">
                             <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
                               step.status === 'completed' ? 'bg-green-100 border-green-300' : 
@@ -561,9 +585,14 @@ export default function LabStaffComponentRequestsPage() {
                             <span className="font-medium">Lab Staff:</span> {r.lab_staff_remarks}
                           </div>
                         )}
+                        {r.lab_coordinator_remarks && (
+                          <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-purple-300">
+                            <span className="font-medium">Lab Coordinator:</span> {r.lab_coordinator_remarks}
+                          </div>
+                        )}
                         {r.hod_remarks && (
                           <div className="text-xs p-2 bg-gray-50 rounded border-l-2 border-blue-300">
-                            <span className="font-medium">{r.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD'}:</span> {r.hod_remarks}
+                            <span className="font-medium">HOD:</span> {r.hod_remarks}
                           </div>
                         )}
                       </div>

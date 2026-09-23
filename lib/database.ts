@@ -1252,22 +1252,35 @@ export const dbOperations = {
     )
     const hasCoordinatorCols = Array.isArray(hasCoordinatorRes.rows) && hasCoordinatorRes.rows[0] && Number(hasCoordinatorRes.rows[0].cnt) === 2
     
+    // Check for component approval authority column
+    const hasCompAuthRes = await db.query(
+      `SELECT COUNT(1) AS cnt FROM information_schema.columns 
+       WHERE table_schema = DATABASE() 
+       AND table_name = 'departments' 
+       AND column_name = 'component_highest_approval_authority'`
+    )
+    const hasCompAuthCol = Array.isArray(hasCompAuthRes.rows) && hasCompAuthRes.rows[0] && Number(hasCompAuthRes.rows[0].cnt) > 0
+
     let select: string
     if (hasHodEmail && hasCoordinatorCols) {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, d.highest_approval_authority, d.lab_coordinator_id,
+      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, d.highest_approval_authority, 
+                       ${hasCompAuthCol ? 'd.component_highest_approval_authority' : "'hod' AS component_highest_approval_authority"},
+                       d.lab_coordinator_id,
                        u_hod.name AS hod_name, u_coord.name AS lab_coordinator_name, d.created_at 
                 FROM departments d 
                 LEFT JOIN users u_hod ON u_hod.id = d.hod_id 
                 LEFT JOIN users u_coord ON u_coord.id = d.lab_coordinator_id 
                 ORDER BY d.name`
     } else if (hasHodEmail) {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, NULL AS highest_approval_authority, NULL AS lab_coordinator_id,
+      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, NULL AS highest_approval_authority, 
+                       'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
                        u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
                 FROM departments d 
                 LEFT JOIN users u ON u.id = d.hod_id 
                 ORDER BY d.name`
     } else {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, NULL AS hod_email, NULL AS highest_approval_authority, NULL AS lab_coordinator_id,
+      select = `SELECT d.id, d.name, d.code, d.hod_id, NULL AS hod_email, NULL AS highest_approval_authority, 
+                       'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
                        u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
                 FROM departments d 
                 LEFT JOIN users u ON u.id = d.hod_id 
@@ -1280,24 +1293,71 @@ export const dbOperations = {
 
   // Lightweight, idempotent migrations for critical columns
   async runLightMigrations() {
-    // Check if departments.hod_email exists and add only if missing (avoid noisy duplicate errors)
-    const colRes = await db.query(
-      `SELECT COUNT(1) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'departments' AND column_name = 'hod_email'`
-    )
-    const hasHodEmail = Array.isArray(colRes.rows) && colRes.rows[0] && Number(colRes.rows[0].cnt) > 0
-    if (!hasHodEmail) {
-      try {
-        await db.query(`ALTER TABLE departments ADD COLUMN hod_email VARCHAR(255) NULL`)
-      } catch (e: any) {
-        // Ignore duplicate column errors due to concurrent migration attempts
-        const code = String(e?.code || e?.message || "")
-        if (code !== 'ER_DUP_FIELDNAME' && !/duplicate column/i.test(String(e?.sqlMessage || e?.message || ''))) {
-          throw e
+    try {
+      // 1. Check departments.hod_email
+      const colRes = await db.query(
+        `SELECT COUNT(1) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'departments' AND column_name = 'hod_email'`
+      )
+      const hasHodEmail = Array.isArray(colRes.rows) && colRes.rows[0] && Number(colRes.rows[0].cnt) > 0
+      if (!hasHodEmail) {
+        try {
+          await db.query(`ALTER TABLE departments ADD COLUMN hod_email VARCHAR(255) NULL`)
+        } catch (e: any) {
+          // ignore duplicate
         }
       }
+
+      // 2. Check departments.component_highest_approval_authority
+      const compAuthRes = await db.query(
+        `SELECT COUNT(1) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'departments' AND column_name = 'component_highest_approval_authority'`
+      )
+      const hasCompAuth = Array.isArray(compAuthRes.rows) && compAuthRes.rows[0] && Number(compAuthRes.rows[0].cnt) > 0
+      if (!hasCompAuth) {
+        try {
+          await db.query(`ALTER TABLE departments ADD COLUMN component_highest_approval_authority ENUM('faculty','lab_staff','lab_coordinator','hod') NOT NULL DEFAULT 'hod'`)
+        } catch (e: any) {
+          // ignore duplicate
+        }
+      }
+
+      // 3. Check component_requests columns and enums
+      const reqColsRes = await db.query(
+        `SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'component_requests'`
+      )
+      if (Array.isArray(reqColsRes.rows) && reqColsRes.rows.length > 0) {
+        const colNames = new Set(reqColsRes.rows.map((r: any) => String(r.column_name || r.COLUMN_NAME).toLowerCase()))
+        
+        if (!colNames.has('lab_coordinator_approver_id')) {
+          try {
+            await db.query(`ALTER TABLE component_requests ADD COLUMN lab_coordinator_approver_id INT NULL`)
+          } catch (e) {}
+        }
+        if (!colNames.has('lab_coordinator_approved_at')) {
+          try {
+            await db.query(`ALTER TABLE component_requests ADD COLUMN lab_coordinator_approved_at DATETIME NULL`)
+          } catch (e) {}
+        }
+        if (!colNames.has('lab_coordinator_remarks')) {
+          try {
+            await db.query(`ALTER TABLE component_requests ADD COLUMN lab_coordinator_remarks VARCHAR(1000) NULL`)
+          } catch (e) {}
+        }
+
+        // Update status and final_approver_role enums if needed
+        try {
+          await db.query(`ALTER TABLE component_requests MODIFY COLUMN status ENUM('pending_faculty','pending_lab_staff','pending_lab_coordinator','pending_hod','approved','rejected') NOT NULL DEFAULT 'pending_faculty'`)
+        } catch (e) {}
+
+        try {
+          await db.query(`ALTER TABLE component_requests MODIFY COLUMN final_approver_role ENUM('faculty','lab_staff','lab_coordinator','hod') NULL`)
+        } catch (e) {}
+      }
+
       return { ok: true, updated: true }
+    } catch (e) {
+      console.error("runLightMigrations error:", e)
+      return { ok: false, error: e }
     }
-    return { ok: true, updated: false }
   },
 
   async createDepartment(dept: { name: string; code: string; hodEmail?: string | null }) {
@@ -1562,7 +1622,8 @@ export const dbOperations = {
   async setDepartmentApprovalAuthority(
     departmentId: number, 
     highestApprovalAuthority?: 'hod' | 'lab_coordinator',
-    labCoordinatorId?: number | null
+    labCoordinatorId?: number | null,
+    componentHighestApprovalAuthority?: 'faculty' | 'lab_staff' | 'lab_coordinator' | 'hod'
   ) {
     return db.transaction(async (client) => {
       // Ensure department exists and get current coordinator
@@ -1608,6 +1669,11 @@ export const dbOperations = {
         updates.push('highest_approval_authority = ?')
         values.push(highestApprovalAuthority)
       }
+
+      if (componentHighestApprovalAuthority !== undefined) {
+        updates.push('component_highest_approval_authority = ?')
+        values.push(componentHighestApprovalAuthority)
+      }
       
       if (labCoordinatorId !== undefined) {
         updates.push('lab_coordinator_id = ?')
@@ -1624,7 +1690,7 @@ export const dbOperations = {
       
       // Return updated department with all relevant info
       const sel = await client.query(
-        `SELECT d.id, d.name, d.code, d.hod_id, d.highest_approval_authority, d.lab_coordinator_id,
+        `SELECT d.id, d.name, d.code, d.hod_id, d.highest_approval_authority, d.component_highest_approval_authority, d.lab_coordinator_id,
                 u_hod.name AS hod_name,
                 u_coord.name AS lab_coordinator_name,
                 u_coord.email AS lab_coordinator_email

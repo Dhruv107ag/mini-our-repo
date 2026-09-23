@@ -82,12 +82,13 @@ export async function PATCH(request: NextRequest) {
 			return NextResponse.json({ department: updated })
 		}
 		
-		// Handle highest approval authority and lab coordinator assignment
-		if (body.highestApprovalAuthority !== undefined || body.labCoordinatorId !== undefined) {
+		// Handle highest approval authority, component approval authority and lab coordinator assignment
+		if (body.highestApprovalAuthority !== undefined || body.labCoordinatorId !== undefined || body.componentHighestApprovalAuthority !== undefined) {
 			const updated = await dbOperations.setDepartmentApprovalAuthority(
 				departmentId,
 				body.highestApprovalAuthority,
-				body.labCoordinatorId
+				body.labCoordinatorId,
+				body.componentHighestApprovalAuthority
 			)
 			const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown"
 			await dbOperations.createLog({
@@ -97,6 +98,7 @@ export async function PATCH(request: NextRequest) {
 				entityId: departmentId,
 				details: { 
 					highestApprovalAuthority: body.highestApprovalAuthority,
+					componentHighestApprovalAuthority: body.componentHighestApprovalAuthority,
 					labCoordinatorId: body.labCoordinatorId 
 				},
 				ipAddress: ip,
