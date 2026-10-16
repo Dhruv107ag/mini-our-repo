@@ -197,8 +197,8 @@ export default function LabStaffTimetablePage() {
       if (res.ok) {
         const data = await res.json()
         // Deduplicate labs by ID to prevent React key conflicts
-        const uniqueLabs = Array.from(
-          new Map((data.labs || []).map((lab: Lab) => [lab.id, lab])).values()
+        const uniqueLabs: Lab[] = Array.from(
+          new Map<number, Lab>((data.labs || []).map((lab: Lab) => [lab.id, lab])).values()
         )
         setLabs(uniqueLabs)
       } else {

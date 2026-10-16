@@ -1567,6 +1567,107 @@ export const emailTemplates = {
           </td>
         </tr>
       `)
+      }
+    },
+
+    monthlyPossessionReminder: (data: {
+      studentName: string
+      studentEmail: string
+      studentSalutation?: string
+      labName: string
+      componentList: string
+      issuedDate: string
+      dueDate?: string
+      daysHeld: number
+    }) => {
+      let greeting = `Dear <b>${data.studentName}</b>`
+      if (data.studentSalutation && data.studentSalutation !== 'none') {
+        const salutationMap: Record<string, string> = { 'prof': 'Prof.', 'dr': 'Dr.', 'mr': 'Mr.', 'mrs': 'Mrs.' }
+        greeting = `Dear <b>${salutationMap[data.studentSalutation] || ''} ${data.studentName}</b>`
+      }
+
+      return {
+        subject: `📦 Monthly Possession Reminder: Lab Components in Your Possession - LNMIIT Lab Management`,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <p>${greeting},</p>
+            <p>This is your <b>periodic monthly possession reminder</b> regarding the laboratory components issued to you.</p>
+
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Laboratory:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.labName}</td>
+              </tr>
+              <tr style="background: #eff6ff;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Issued Components:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #034da2;">${data.componentList}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Issued On:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.issuedDate}</td>
+              </tr>
+              <tr style="background: #eff6ff;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Total Duration in Possession:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><b>${data.daysHeld} days</b> (~${Math.max(1, Math.round(data.daysHeld / 30))} month(s))</td>
+              </tr>
+              ${data.dueDate ? `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Due Return Date:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.dueDate}</td>
+              </tr>` : ''}
+            </table>
+
+            <p style="padding: 12px; background: #e0f2fe; border-left: 4px solid #0284c7; color: #0369a1;">
+              <strong>ℹ️ Monthly Safety & Verification Check:</strong> Please verify that all items are in working condition and kept safely. If your project is complete, please return them to the lab. If you need more time, you may request an extension via the portal.
+            </p>
+
+            <div style="margin-top: 25px; text-align: center;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/student/dashboard/my-component-requests" 
+                 style="display: inline-block; padding: 12px 30px; background-color: #034da2; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                View My Component Requests
+              </a>
+            </div>
+          </td>
+        </tr>
+      `)
+      }
+    },
+
+    requestWithdrawn: (data: {
+      requesterName: string
+      requesterRole: string
+      labName: string
+      requestId: number | string
+      notifyEmail: string
+      notifyRole: string
+    }) => {
+      return {
+        subject: `⚠️ Component Request #${data.requestId} Withdrawn - ${data.labName}`,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <p>Dear <b>${data.notifyRole}</b>,</p>
+            <p>Please note that the component requisition request <b>#${data.requestId}</b> has been withdrawn by the requester.</p>
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Withdrawn By:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.requesterName} (${data.requesterRole})</td>
+              </tr>
+              <tr style="background: #fef2f2;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Laboratory:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.labName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Status:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #dc2626; font-weight: bold;">Withdrawn by Requester</td>
+              </tr>
+            </table>
+            <p style="color: #64748b; font-size: 13px;">No further review or action is required for this request.</p>
+          </td>
+        </tr>
+      `)
+      }
     }
-  }
 }
+

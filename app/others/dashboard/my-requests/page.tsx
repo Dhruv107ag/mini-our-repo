@@ -44,6 +44,7 @@ interface BookingWithTimeline {
   requested_by: number
   faculty_supervisor_id: number | null
   created_at: string
+  highest_approval_authority?: 'hod' | 'lab_coordinator'
   is_multi_lab?: number | boolean
   responsible_person_name?: string
   responsible_person_email?: string
@@ -229,6 +230,17 @@ export default function TNPMyRequestsPage() {
       return 'Lab Staff Recommendation'
     }
     return stepName
+  }
+
+  // Helper function to determine the correct authority label for completed approvals
+  const getAuthorityLabel = (request: BookingWithTimeline): 'Lab Coordinator' | 'HOD' => {
+    const hasLabCoordApproval = request.timeline?.some(t => t.step_name === 'Lab Coordinator Approval' && t.step_status === 'completed')
+    const hasHODApproval = request.timeline?.some(t => t.step_name === 'HOD Approval' && t.step_status === 'completed')
+    
+    if (hasLabCoordApproval) return 'Lab Coordinator'
+    if (hasHODApproval) return 'HOD'
+    
+    return request.highest_approval_authority === 'lab_coordinator' ? 'Lab Coordinator' : 'HOD'
   }
 
   const TimelineView = ({ request }: { request: BookingWithTimeline }) => {
@@ -731,7 +743,7 @@ export default function TNPMyRequestsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {getStatusBadge(request.status)}
+              {getStatusBadge(request)}
               {canWithdraw(request.status) && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

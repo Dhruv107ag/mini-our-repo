@@ -81,6 +81,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
         return [
           ...baseItems,
           { name: "My Labs", href: withPrefix("/dashboard/labs"), icon: Building },
+          { name: "Lab Inventory", href: withPrefix("/dashboard/inventory"), icon: Package },
           { name: "View Timetable", href: withPrefix("/dashboard/timetable"), icon: Calendar },
           { name: "Lab Booking Requests", href: withPrefix("/dashboard/approve"), icon: UserCheck },
           { name: "Component Requests", href: withPrefix("/dashboard/component-requests"), icon: Package },
@@ -92,6 +93,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
         return [
           ...baseItems,
           { name: "Department Labs", href: withPrefix("/dashboard/labs"), icon: Building },
+          { name: "Lab Inventory", href: withPrefix("/dashboard/inventory"), icon: Package },
           { name: "View Logs", href: withPrefix("/dashboard/logs"), icon: History },
           { name: "Approvals", href: withPrefix("/dashboard/approvals"), icon: UserCheck },
           { name: "Analytics", href: withPrefix("/dashboard/analytics"), icon: BarChart3 },
@@ -102,6 +104,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
         return [
           ...baseItems,
           { name: "Department Labs", href: withPrefix("/dashboard/labs"), icon: Building },
+          { name: "Lab Inventory", href: withPrefix("/dashboard/inventory"), icon: Package },
           { name: "View Logs", href: withPrefix("/dashboard/logs"), icon: History },
           { name: "Approvals", href: withPrefix("/dashboard/approvals"), icon: UserCheck },
           { name: "Analytics", href: withPrefix("/dashboard/analytics"), icon: BarChart3 },
@@ -111,6 +114,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
         return [
           ...baseItems,
           { name: "Department and Lab Management", href: "/admin/dashboard/department-and-lab-management", icon: Building },
+          { name: "Lab Inventory", href: "/admin/dashboard/inventory", icon: Package },
           { name: "User Management", href: "/admin/users", icon: Users },
           { name: "Timetable", href: "/admin/dashboard/timetable", icon: Calendar },
         ]

@@ -238,7 +238,7 @@ export async function POST(
     }
 
     // Log the activity
-    const userInfo = await getUserInfoForLogging(user.id)
+    const userInfo = await getUserInfoForLogging(Number(user.userId))
     logLabBookingActivity({
       bookingId: Number(bookingId),
       labId: Number(lab_id),

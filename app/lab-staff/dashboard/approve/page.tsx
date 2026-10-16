@@ -37,6 +37,9 @@ interface RequestItem {
   lab_staff_remarks?: string
   hod_remarks?: string
   highest_approval_authority?: 'hod' | 'lab_coordinator'
+  lab_staff_approved_at?: string
+  responsible_person_name?: string
+  responsible_person_email?: string
   timeline?: any[]
   multi_lab_approvals?: Array<{
     lab_id: number

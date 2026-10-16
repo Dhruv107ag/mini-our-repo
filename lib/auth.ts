@@ -18,7 +18,14 @@ export interface AuthUser {
 // Verify JWT token from request
 export async function verifyToken(request: NextRequest): Promise<AuthUser | null> {
   try {
-    const token = request.cookies.get("auth-token")?.value
+    let token = request.cookies.get("auth-token")?.value
+
+    if (!token) {
+      const authHeader = request.headers.get("authorization")
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim()
+      }
+    }
 
     if (!token) {
       return null

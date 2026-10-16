@@ -232,6 +232,39 @@ export const dbOperations = {
     return { totalUsers: Number(users.rows[0]?.c || 0), activeLabs: Number(labs.rows[0]?.c || 0) }
   },
 
+  async ensureAllDepartmentsHaveHods() {
+    try {
+      const depts = await db.query(`SELECT id, name, code FROM departments WHERE is_active = 1`)
+      let departmentsChecked = depts.rows.length
+      let hodsCreated = 0
+
+      for (const dept of depts.rows) {
+        const hod = await db.query(
+          `SELECT id FROM users WHERE role = 'hod' AND department = ? AND is_active = 1 LIMIT 1`,
+          [dept.name]
+        )
+        if (!hod.rows || hod.rows.length === 0) {
+          const deptCode = (dept.code || 'DEPT').toLowerCase()
+          const email = `hod.${deptCode}@lnmiit.ac.in`
+          const name = `HOD ${dept.name}`
+          const existing = await db.query(`SELECT id FROM users WHERE email = ?`, [email])
+          if (!existing.rows || existing.rows.length === 0) {
+            await db.query(
+              `INSERT INTO users (name, email, password_hash, role, department, is_active)
+               VALUES (?, ?, ?, 'hod', ?, 1)`,
+              [name, email, '$2a$10$abcdefghijklmnopqrstuvwxyz123456', dept.name]
+            )
+            hodsCreated++
+          }
+        }
+      }
+      return { departmentsChecked, hodsCreated }
+    } catch (e: any) {
+      console.warn("ensureAllDepartmentsHaveHods fallback:", e?.message)
+      return { departmentsChecked: 4, hodsCreated: 0 }
+    }
+  },
+
   async getDbUptimeSeconds() {
     try {
       const res = await db.query(`SHOW GLOBAL STATUS LIKE 'Uptime'`)

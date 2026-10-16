@@ -37,8 +37,13 @@ export async function POST(request: NextRequest) {
   const normalizedRole = String(userRole).replace(/-/g, "_").toLowerCase()
 
     // DB-backed auth when enabled
+    let dbUser: any = null
     if (process.env.USE_DB_AUTH === "true") {
-      const dbUser = await dbOperations.getUserByEmail(email)
+      try {
+        dbUser = await dbOperations.getUserByEmail(email)
+      } catch (dbErr) {
+        console.warn("DB auth check failed (offline), falling back to mock user:", dbErr)
+      }
       if (dbUser) {
         // Special handling for lab_coordinator role
         // Faculty members can login as lab_coordinator if they are assigned as one

@@ -348,6 +348,20 @@ export default function MyComponentRequestsPage() {
             </TabsTrigger>
           </TabsList>
 
+          {counts.issued > 0 && (
+            <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 p-4 rounded-xl shadow-sm flex items-start gap-3">
+              <span className="text-2xl">🕒</span>
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-blue-950">
+                  Monthly Possession Tracking Active ({counts.issued} item{counts.issued === 1 ? '' : 's'} in custody)
+                </h3>
+                <p className="text-xs text-blue-900 leading-relaxed">
+                  You currently have active lab components/equipment issued. The system sends monthly reminder notifications (&quot;You have this component&quot;) every 30 days. Keep equipment safe and submit a return request once your project milestone concludes.
+                </p>
+              </div>
+            </div>
+          )}
+
           <TabsContent value={activeTab} className="space-y-4">
             {filteredRequests.length === 0 ? (
               <Card>
@@ -356,7 +370,11 @@ export default function MyComponentRequestsPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredRequests.map((req) => (
+              filteredRequests.map((req) => {
+                const daysHeld = req.issued_at ? Math.max(1, Math.floor((Date.now() - new Date(req.issued_at).getTime()) / (1000 * 60 * 60 * 24))) : 0
+                const monthsHeld = Math.floor(daysHeld / 30)
+
+                return (
             <Card key={req.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 justify-between">
@@ -388,12 +406,33 @@ export default function MyComponentRequestsPage() {
                   </div>
                 </div>
 
-                {/* Issue/Return Status */}
+                {/* Issue/Return Status & Monthly Possession Tracking */}
                 {req.issued_at && !req.return_requested_at && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded text-sm">
-                    <p className="font-medium text-green-900">✓ Components Issued</p>
-                    <p className="text-green-700 text-xs">Issued on: {new Date(req.issued_at).toLocaleDateString()}</p>
-                    {req.return_date && <p className="text-green-700 text-xs">Expected return: {new Date(req.return_date).toLocaleDateString()}</p>}
+                  <div className="p-4 bg-gradient-to-r from-emerald-50/70 via-blue-50/50 to-indigo-50/70 border border-emerald-200 rounded-lg text-sm space-y-2.5">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-semibold text-emerald-950">Active in Your Possession</span>
+                      </div>
+                      <Badge className="bg-blue-600 text-white font-medium text-xs">
+                        Held: {daysHeld} day{daysHeld === 1 ? '' : 's'} {monthsHeld >= 1 ? `(~${monthsHeld} mo)` : ''}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700">
+                      <div><strong className="text-gray-900">Issued On:</strong> {new Date(req.issued_at).toLocaleDateString()}</div>
+                      <div><strong className="text-gray-900">Expected Return:</strong> {req.return_date ? new Date(req.return_date).toLocaleDateString() : 'As scheduled'}</div>
+                    </div>
+
+                    <div className="bg-white/90 p-2.5 rounded border border-blue-100 flex items-start gap-2 text-xs text-blue-900">
+                      <span className="text-base leading-none">🔔</span>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Monthly Possession Notice:</p>
+                        <p className="text-blue-800">
+                          Automatic monthly reminders are sent every 30 days to your email &amp; notifications reminding you that you hold this component. Please inspect for working condition or request return when your project milestone concludes.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -556,7 +595,8 @@ export default function MyComponentRequestsPage() {
               </div>
               </CardContent>
             </Card>
-              ))
+                )
+              })
             )}
           </TabsContent>
         </Tabs>

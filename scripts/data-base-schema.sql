@@ -562,6 +562,72 @@ CREATE TABLE `inventory` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `lab_inventory` (Dual Consumable & Non-Consumable register)
+--
+
+DROP TABLE IF EXISTS `lab_inventory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lab_inventory` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `lab_id` int NOT NULL,
+  `lab_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `part_no` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_type` enum('consumable','non_consumable') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'consumable',
+  `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'General',
+  `purchase_quantity` int NOT NULL DEFAULT '0',
+  `available_quantity` int NOT NULL DEFAULT '0',
+  `consumed_quantity` int NOT NULL DEFAULT '0',
+  `condemned_quantity` int NOT NULL DEFAULT '0',
+  `unit` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'pcs',
+  `purchase_date` date DEFAULT NULL,
+  `purchase_pdf_url` text COLLATE utf8mb4_unicode_ci,
+  `purchase_pdf_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remarks` text COLLATE utf8mb4_unicode_ci,
+  `created_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_lab_inventory_lab` (`lab_id`),
+  KEY `idx_lab_inventory_part_no` (`part_no`),
+  KEY `idx_lab_inventory_type` (`item_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `lab_inventory_adjustments` (Audit trail for changes with mandatory proof & sign document on negative adjustments)
+--
+
+DROP TABLE IF EXISTS `lab_inventory_adjustments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lab_inventory_adjustments` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `inventory_id` int NOT NULL,
+  `action_type` enum('purchase_add','consumed','condemned','stock_adjustment') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity_change` int NOT NULL,
+  `prev_available` int NOT NULL,
+  `new_available` int NOT NULL,
+  `prev_consumed` int NOT NULL,
+  `new_consumed` int NOT NULL,
+  `prev_condemned` int NOT NULL,
+  `new_condemned` int NOT NULL,
+  `remark` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `proof_doc_url` text COLLATE utf8mb4_unicode_ci,
+  `proof_doc_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `purchase_pdf_url` text COLLATE utf8mb4_unicode_ci,
+  `purchase_pdf_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `performed_by_id` int DEFAULT NULL,
+  `performed_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `performed_by_role` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_lab_adj_inv_id` (`inventory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `item_issues`
 --
 

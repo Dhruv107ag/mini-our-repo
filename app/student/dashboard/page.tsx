@@ -44,6 +44,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
   const [stats, setStats] = useState({
     pending: 0,
     approved: 0,
@@ -67,11 +68,24 @@ export default function StudentDashboard() {
         }
       } catch {}
     }
-    // Only load booking requests if we have a user
+    // Only load data if we have a user
     if (u) {
       loadBookingRequests()
+      loadNotifications()
     }
   }, [])
+
+  const loadNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications")
+      if (res.ok) {
+        const data = await res.json()
+        setNotifications(data.notifications || [])
+      }
+    } catch (err) {
+      console.warn("Failed to load notifications:", err)
+    }
+  }
 
   const loadBookingRequests = async () => {
     try {
@@ -164,6 +178,31 @@ export default function StudentDashboard() {
           </Link>
         </Button>
       </div>
+
+      {/* Monthly Component Possession Reminder Alert */}
+      {notifications.some(n => n.title?.toLowerCase().includes('monthly reminder') || n.title?.toLowerCase().includes('possession')) && (
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-300 p-4 rounded-xl shadow-sm flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl mt-0.5">🔔</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-blue-950">
+                  Monthly Possession Reminder: Active Lab Component
+                </h3>
+                <Badge className="bg-blue-600 text-white text-[10px]">Monthly Notice</Badge>
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed max-w-2xl">
+                {notifications.find(n => n.title?.toLowerCase().includes('monthly reminder') || n.title?.toLowerCase().includes('possession'))?.message}
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0 bg-white hover:bg-blue-50 text-blue-800 border-blue-300 text-xs" asChild>
+            <Link href="/student/dashboard/my-component-requests">
+              View Items
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -314,13 +353,41 @@ export default function StudentDashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <span>Notifications & Reminders</span>
+              {notifications.length > 0 && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                  {notifications.length}
+                </Badge>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">No new notifications</p>
-            </div>
+            {notifications.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                <p className="text-sm">No new notifications</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.slice(0, 4).map((n: any) => (
+                  <div key={n.id} className="p-3 bg-muted/40 hover:bg-muted/70 rounded-lg border text-sm transition-colors space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                        <span className="text-blue-600">🔔</span>
+                        {n.title}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(n.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-5">
+                      {n.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -276,7 +276,7 @@ export async function DELETE(request: NextRequest) {
     const booking = bookingResult.rows[0]
 
     // Only the requester can withdraw their booking
-    if (booking.requested_by !== user.id) {
+    if (Number(booking.requested_by) !== Number(user.userId)) {
       return NextResponse.json({ error: "You can only withdraw your own bookings" }, { status: 403 })
     }
 
@@ -535,7 +535,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Log the withdrawal activity
-    const userInfo = await getUserInfoForLogging(user.id)
+    const userInfo = await getUserInfoForLogging(Number(user.userId))
     let labIdsToLog: number[] = []
     if (booking.is_multi_lab) {
       if (Buffer.isBuffer(booking.lab_ids)) {
