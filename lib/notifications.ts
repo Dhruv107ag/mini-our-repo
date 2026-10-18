@@ -1668,6 +1668,293 @@ export const emailTemplates = {
         </tr>
       `)
       }
+    },
+
+    nonConsumableReturnReminder: (data: {
+      studentName: string
+      studentEmail: string
+      studentSalutation?: string
+      labName: string
+      componentList: string
+      issuedDate: string
+      dueDate?: string
+      daysHeld: number
+      milestone: '1_month' | '1_semester' | 'critical_extended'
+      requestId?: number | string
+      loanId?: number | string
+    }) => {
+      let greeting = `Dear <b>${data.studentName}</b>`
+      if (data.studentSalutation && data.studentSalutation !== 'none') {
+        const salutationMap: Record<string, string> = { 'prof': 'Prof.', 'dr': 'Dr.', 'mr': 'Mr.', 'mrs': 'Mrs.' }
+        greeting = `Dear <b>${salutationMap[data.studentSalutation] || ''} ${data.studentName}</b>`
+      }
+
+      const isSem = data.milestone === '1_semester'
+      const isCritical = data.milestone === 'critical_extended'
+
+      const headerColor = isCritical ? '#991b1b' : isSem ? '#dc2626' : '#d97706'
+      const badgeText = isCritical 
+        ? '🚨 CRITICAL OVERDUE NOTICE (> 6 MONTHS)' 
+        : isSem 
+          ? '⚠️ 1-SEMESTER RETURN REQUIREMENT (~4 MONTHS)' 
+          : '📦 1-MONTH RETURN REMINDER (~30 DAYS)'
+
+      const subject = isCritical
+        ? `🚨 [CRITICAL OVERDUE] Return Required: Non-Consumable Lab Equipment - ${data.labName}`
+        : isSem
+          ? `⚠️ [1-Semester Notice] Urgent Return Required: Non-Consumable Lab Equipment - ${data.labName}`
+          : `📦 [1-Month Reminder] Non-Consumable Lab Equipment in Your Possession - ${data.labName}`
+
+      const instructions = isCritical
+        ? `<strong>⚡ Critical Action Required:</strong> Our records confirm you have possessed this non-consumable hardware for over 6 months across multiple academic terms. Non-consumable assets belong to the institute and must be returned or physically accounted for. Continued withholding may lead to a block on your semester registration, grade cards, and No-Dues clearance.`
+        : isSem
+          ? `<strong>⚠️ End-of-Semester Requirement:</strong> You have had this non-consumable equipment for approximately 1 academic semester (~${data.daysHeld} days). Departmental lab regulations mandate that all durable non-consumable equipment be physically surrendered or inspected by lab staff before the conclusion of each semester. Please return the items to avoid clearance holds.`
+          : `<strong>ℹ️ Periodic Check-in:</strong> You have had this non-consumable item for over 1 month (~${data.daysHeld} days). Non-consumables are shared lab assets. If your scheduled lab work or assignment is complete, please return the item promptly. If you still require the equipment for an ongoing project, please apply for an extension through the student portal.`
+
+      return {
+        subject,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <div style="display:inline-block; padding: 6px 14px; background-color: ${headerColor}; color: white; font-size: 12px; font-weight: bold; border-radius: 4px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+              ${badgeText}
+            </div>
+
+            <p>${greeting},</p>
+            <p>This is an automated notification regarding the <b>non-consumable laboratory item(s)</b> currently issued under your name.</p>
+
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; width: 35%;"><strong>Laboratory:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.labName}</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Non-Consumable Item(s):</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #034da2;">${data.componentList}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Item Classification:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><span style="background: #e2e8f0; color: #334155; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">NON-CONSUMABLE (Must be returned)</span></td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Issued On:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.issuedDate}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Duration in Possession:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: ${headerColor}; font-weight: bold;">
+                  ${data.daysHeld} days (${isCritical ? '> 6 months' : isSem ? '~1 semester' : '~1 month'})
+                </td>
+              </tr>
+              ${data.dueDate ? `
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Due Date:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.dueDate}</td>
+              </tr>` : ''}
+              ${data.requestId ? `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Reference ID:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">#${data.requestId}</td>
+              </tr>` : ''}
+            </table>
+
+            <div style="padding: 14px; background: ${isCritical ? '#fee2e2' : isSem ? '#fff7ed' : '#f0f9ff'}; border-left: 4px solid ${headerColor}; color: #1e293b; font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
+              ${instructions}
+            </div>
+
+            <div style="margin-top: 25px; text-align: center;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/student/dashboard/my-loans" 
+                 style="display: inline-block; padding: 12px 28px; background-color: #034da2; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; margin-right: 8px;">
+                Manage Loans & Return Items
+              </a>
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/student/dashboard/my-component-requests" 
+                 style="display: inline-block; padding: 12px 24px; background-color: #e2e8f0; color: #1e293b; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+                View Request History
+              </a>
+            </div>
+          </td>
+        </tr>
+      `)
+      }
+    },
+
+    interLabRequestCreated: (data: {
+      toStaffName: string
+      fromStaffName: string
+      fromLabName: string
+      toLabName: string
+      itemName: string
+      quantity: number
+      purpose: string
+      neededByDate?: string
+      expectedReturnDate?: string
+      requestId: number | string
+    }) => {
+      return {
+        subject: `📦 Inter-Lab Component Requisition #${data.requestId}: ${data.fromLabName} requested ${data.itemName}`,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <div style="display:inline-block; padding: 6px 14px; background-color: #0284c7; color: white; font-size: 12px; font-weight: bold; border-radius: 4px; margin-bottom: 12px; text-transform: uppercase;">
+              INTER-LAB REQUISITION REQUEST
+            </div>
+
+            <p>Dear <b>${data.toStaffName}</b>,</p>
+            <p>A fellow laboratory staff member has submitted an <b>Inter-Lab Component Requisition</b> requesting equipment from your lab.</p>
+
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; width: 35%;"><strong>Requesting Staff:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #034da2;">${data.fromStaffName} (${data.fromLabName})</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Target Laboratory:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.toLabName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Requested Item:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${data.itemName} (Qty: ${data.quantity})</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Purpose / Need:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.purpose}</td>
+              </tr>
+              ${data.expectedReturnDate ? `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Expected Return:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.expectedReturnDate}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Request ID:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">#${data.requestId}</td>
+              </tr>
+            </table>
+
+            <p style="padding: 12px; background: #e0f2fe; border-left: 4px solid #0284c7; color: #0369a1; font-size: 13px;">
+              <strong>Action Required:</strong> Please review this requisition on your Lab Staff Portal and choose to <b>Approve & Transfer</b> or <b>Decline</b> based on your lab's inventory availability.
+            </p>
+
+            <div style="margin-top: 25px; text-align: center;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/lab-staff/dashboard/inter-lab-requests" 
+                 style="display: inline-block; padding: 12px 28px; background-color: #034da2; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+                Review Inter-Lab Request
+              </a>
+            </div>
+          </td>
+        </tr>
+      `)
+      }
+    },
+
+    interLabRequestApproved: (data: {
+      fromStaffName: string
+      toStaffName: string
+      fromLabName: string
+      toLabName: string
+      itemName: string
+      quantity: number
+      remarks?: string
+      requestId: number | string
+    }) => {
+      return {
+        subject: `✅ [CONFIRMED] Inter-Lab Requisition #${data.requestId} Approved - ${data.toLabName}`,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <div style="display:inline-block; padding: 6px 14px; background-color: #059669; color: white; font-size: 12px; font-weight: bold; border-radius: 4px; margin-bottom: 12px; text-transform: uppercase;">
+              REQUEST CONFIRMED & APPROVED
+            </div>
+
+            <p>Dear <b>${data.fromStaffName}</b>,</p>
+            <p>Great news! Your Inter-Lab Component Requisition <b>#${data.requestId}</b> has been <b>APPROVED</b> by <b>${data.toStaffName}</b>.</p>
+
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; width: 35%;"><strong>Fulfilling Lab:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #034da2;">${data.toLabName}</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Approved Item:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #059669;">${data.itemName} (Qty: ${data.quantity})</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Approved By:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.toStaffName}</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Approval Remarks:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.remarks || 'Approved for inter-lab transfer. Ready for handover.'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Status:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #059669;">CONFIRMED</td>
+              </tr>
+            </table>
+
+            <p style="padding: 12px; background: #ecfdf5; border-left: 4px solid #10b981; color: #047857; font-size: 13px;">
+              <strong>⚡ Next Steps:</strong> You may now coordinate with ${data.toStaffName} to physically collect the equipment for your laboratory.
+            </p>
+
+            <div style="margin-top: 25px; text-align: center;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/lab-staff/dashboard/inter-lab-requests" 
+                 style="display: inline-block; padding: 12px 28px; background-color: #034da2; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+                View Confirmed Requisition
+              </a>
+            </div>
+          </td>
+        </tr>
+      `)
+      }
+    },
+
+    interLabRequestRejected: (data: {
+      fromStaffName: string
+      toStaffName: string
+      fromLabName: string
+      toLabName: string
+      itemName: string
+      quantity: number
+      remarks?: string
+      requestId: number | string
+    }) => {
+      return {
+        subject: `❌ Inter-Lab Requisition #${data.requestId} Declined - ${data.toLabName}`,
+        html: createEmailTemplate(`
+        <tr>
+          <td style="padding:10px 30px; margin:0; text-align:left; font-size:14px;">
+            <div style="display:inline-block; padding: 6px 14px; background-color: #dc2626; color: white; font-size: 12px; font-weight: bold; border-radius: 4px; margin-bottom: 12px; text-transform: uppercase;">
+              REQUISITION DECLINED
+            </div>
+
+            <p>Dear <b>${data.fromStaffName}</b>,</p>
+            <p>Please note that your Inter-Lab Component Requisition <b>#${data.requestId}</b> for <b>"${data.itemName}"</b> could not be approved by ${data.toStaffName} (${data.toLabName}).</p>
+
+            <table style="width:100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; width: 35%;"><strong>Requested Item:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${data.itemName} (Qty: ${data.quantity})</td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Target Lab:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.toLabName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Reason / Remarks:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #dc2626;">${data.remarks || 'Currently in use or unavailable'}</td>
+              </tr>
+            </table>
+
+            <div style="margin-top: 25px; text-align: center;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/lab-staff/dashboard/inter-lab-requests" 
+                 style="display: inline-block; padding: 12px 28px; background-color: #034da2; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+                View My Requisitions
+              </a>
+            </div>
+          </td>
+        </tr>
+      `)
+      }
     }
 }
+
 

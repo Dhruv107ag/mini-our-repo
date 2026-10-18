@@ -8,8 +8,9 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Package, ClipboardList, Plus } from "lucide-react"
+import { Package, ClipboardList, Plus, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
+import { LabStaffNotificationQueue } from "@/components/dashboard/lab-staff-notification-queue"
 
 export default function LabStaffDashboardPage() {
 	const [currentUser, setCurrentUser] = useState<any>(null)
@@ -131,6 +132,9 @@ export default function LabStaffDashboardPage() {
 				</Card>
 			</div>
 
+			{/* Non-Consumable Return Notification Queue */}
+			<LabStaffNotificationQueue />
+
 			{/* Quick Actions */}
 			<Card>
 				<CardHeader>
@@ -147,6 +151,12 @@ export default function LabStaffDashboardPage() {
 						<Link href="/lab-staff/dashboard/component-requests">
 							<ClipboardList className="h-4 w-4 mr-2" />
 							Review Component Requests
+						</Link>
+					</Button>
+					<Button asChild variant="outline" className="w-full justify-start">
+						<Link href="/lab-staff/dashboard/inter-lab-requests">
+							<ArrowLeftRight className="h-4 w-4 mr-2 text-indigo-600" />
+							Inter-Lab Component Requisitions
 						</Link>
 					</Button>
 				</CardContent>

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Menu, Settings, LogOut } from "lucide-react"
+import { NotificationNavBell } from "@/components/dashboard/notification-nav-bell"
 
 interface DashboardHeaderProps {
   user: {
@@ -108,8 +109,11 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
         </div>
       </div>
 
-      {/* Right Section - User Menu */}
-      <div className="flex items-center gap-4">
+      {/* Right Section - Notifications & User Menu */}
+      <div className="flex items-center gap-3">
+        {/* Notification Bell Popover */}
+        <NotificationNavBell userId={user.id} />
+
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

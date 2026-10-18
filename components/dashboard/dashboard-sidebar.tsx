@@ -21,6 +21,7 @@ import {
   X,
   CheckSquare,
   History,
+  ArrowLeftRight,
 } from "lucide-react"
 
 interface User {
@@ -77,6 +78,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
           { name: "View Logs", href: withPrefix("/dashboard/logs"), icon: History },
         ]
 
+      case "lab_staff":
       case "lab-staff":
         return [
           ...baseItems,
@@ -85,6 +87,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
           { name: "View Timetable", href: withPrefix("/dashboard/timetable"), icon: Calendar },
           { name: "Lab Booking Requests", href: withPrefix("/dashboard/approve"), icon: UserCheck },
           { name: "Component Requests", href: withPrefix("/dashboard/component-requests"), icon: Package },
+          { name: "Inter-Lab Requisitions", href: withPrefix("/dashboard/inter-lab-requests"), icon: ArrowLeftRight },
           { name: "View Logs", href: withPrefix("/dashboard/logs"), icon: History },
           { name: "Analytics", href: withPrefix("/dashboard/analytics"), icon: BarChart3 },
         ]
