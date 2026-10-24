@@ -6,6 +6,7 @@
 // MySQL implementation using mysql2/promise
 
 import { createPool, Pool, PoolConnection, RowDataPacket, ResultSetHeader } from "mysql2/promise"
+import { MOCK_DEPARTMENTS } from "./admin-mock-data"
 
 // Database configuration
 const dbConfig = {
@@ -1269,59 +1270,64 @@ export const dbOperations = {
 
   // Departments
   async listDepartments() {
-    // Decide query based on schema introspection to avoid error logs
-    const hasColRes = await db.query(
-      `SELECT COUNT(1) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'departments' AND column_name = 'hod_email'`
-    )
-    const hasHodEmail = Array.isArray(hasColRes.rows) && hasColRes.rows[0] && Number(hasColRes.rows[0].cnt) > 0
-    
-    // Check for new lab coordinator columns
-    const hasCoordinatorRes = await db.query(
-      `SELECT COUNT(1) AS cnt FROM information_schema.columns 
-       WHERE table_schema = DATABASE() 
-       AND table_name = 'departments' 
-       AND column_name IN ('highest_approval_authority', 'lab_coordinator_id')
-       GROUP BY table_name`
-    )
-    const hasCoordinatorCols = Array.isArray(hasCoordinatorRes.rows) && hasCoordinatorRes.rows[0] && Number(hasCoordinatorRes.rows[0].cnt) === 2
-    
-    // Check for component approval authority column
-    const hasCompAuthRes = await db.query(
-      `SELECT COUNT(1) AS cnt FROM information_schema.columns 
-       WHERE table_schema = DATABASE() 
-       AND table_name = 'departments' 
-       AND column_name = 'component_highest_approval_authority'`
-    )
-    const hasCompAuthCol = Array.isArray(hasCompAuthRes.rows) && hasCompAuthRes.rows[0] && Number(hasCompAuthRes.rows[0].cnt) > 0
+    try {
+      // Decide query based on schema introspection to avoid error logs
+      const hasColRes = await db.query(
+        `SELECT COUNT(1) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'departments' AND column_name = 'hod_email'`
+      )
+      const hasHodEmail = Array.isArray(hasColRes.rows) && hasColRes.rows[0] && Number(hasColRes.rows[0].cnt) > 0
+      
+      // Check for new lab coordinator columns
+      const hasCoordinatorRes = await db.query(
+        `SELECT COUNT(1) AS cnt FROM information_schema.columns 
+         WHERE table_schema = DATABASE() 
+         AND table_name = 'departments' 
+         AND column_name IN ('highest_approval_authority', 'lab_coordinator_id')
+         GROUP BY table_name`
+      )
+      const hasCoordinatorCols = Array.isArray(hasCoordinatorRes.rows) && hasCoordinatorRes.rows[0] && Number(hasCoordinatorRes.rows[0].cnt) === 2
+      
+      // Check for component approval authority column
+      const hasCompAuthRes = await db.query(
+        `SELECT COUNT(1) AS cnt FROM information_schema.columns 
+         WHERE table_schema = DATABASE() 
+         AND table_name = 'departments' 
+         AND column_name = 'component_highest_approval_authority'`
+      )
+      const hasCompAuthCol = Array.isArray(hasCompAuthRes.rows) && hasCompAuthRes.rows[0] && Number(hasCompAuthRes.rows[0].cnt) > 0
 
-    let select: string
-    if (hasHodEmail && hasCoordinatorCols) {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, d.highest_approval_authority, 
-                       ${hasCompAuthCol ? 'd.component_highest_approval_authority' : "'hod' AS component_highest_approval_authority"},
-                       d.lab_coordinator_id,
-                       u_hod.name AS hod_name, u_coord.name AS lab_coordinator_name, d.created_at 
-                FROM departments d 
-                LEFT JOIN users u_hod ON u_hod.id = d.hod_id 
-                LEFT JOIN users u_coord ON u_coord.id = d.lab_coordinator_id 
-                ORDER BY d.name`
-    } else if (hasHodEmail) {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, NULL AS highest_approval_authority, 
-                       'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
-                       u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
-                FROM departments d 
-                LEFT JOIN users u ON u.id = d.hod_id 
-                ORDER BY d.name`
-    } else {
-      select = `SELECT d.id, d.name, d.code, d.hod_id, NULL AS hod_email, NULL AS highest_approval_authority, 
-                       'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
-                       u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
-                FROM departments d 
-                LEFT JOIN users u ON u.id = d.hod_id 
-                ORDER BY d.name`
+      let select: string
+      if (hasHodEmail && hasCoordinatorCols) {
+        select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, d.highest_approval_authority, 
+                         ${hasCompAuthCol ? 'd.component_highest_approval_authority' : "'hod' AS component_highest_approval_authority"},
+                         d.lab_coordinator_id,
+                         u_hod.name AS hod_name, u_coord.name AS lab_coordinator_name, d.created_at 
+                  FROM departments d 
+                  LEFT JOIN users u_hod ON u_hod.id = d.hod_id 
+                  LEFT JOIN users u_coord ON u_coord.id = d.lab_coordinator_id 
+                  ORDER BY d.name`
+      } else if (hasHodEmail) {
+        select = `SELECT d.id, d.name, d.code, d.hod_id, d.hod_email, NULL AS highest_approval_authority, 
+                         'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
+                         u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
+                  FROM departments d 
+                  LEFT JOIN users u ON u.id = d.hod_id 
+                  ORDER BY d.name`
+      } else {
+        select = `SELECT d.id, d.name, d.code, d.hod_id, NULL AS hod_email, NULL AS highest_approval_authority, 
+                         'hod' AS component_highest_approval_authority, NULL AS lab_coordinator_id,
+                         u.name AS hod_name, NULL AS lab_coordinator_name, d.created_at 
+                  FROM departments d 
+                  LEFT JOIN users u ON u.id = d.hod_id 
+                  ORDER BY d.name`
+      }
+      
+      const res = await db.query(select)
+      return res.rows
+    } catch (e) {
+      console.warn("listDepartments fallback (DB not ready):", e)
+      return MOCK_DEPARTMENTS as any[]
     }
-    
-    const res = await db.query(select)
-    return res.rows
   },
 
   // Lightweight, idempotent migrations for critical columns

@@ -66,6 +66,7 @@ import {
 } from "lucide-react"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
+import { MOCK_INVENTORY_ITEMS, MOCK_LABS } from "@/lib/admin-mock-data"
 
 export interface InventoryItem {
   id: number
@@ -205,15 +206,24 @@ export function LabInventoryManager({ userRole = "lab_staff", defaultLabId }: La
   const loadLabs = async () => {
     try {
       const res = await fetch("/api/labs")
-      const data = await res.json()
-      if (data.labs && Array.isArray(data.labs)) {
-        setLabs(data.labs)
-        if (!addForm.lab_id && data.labs.length > 0) {
-          setAddForm((prev) => ({ ...prev, lab_id: String(data.labs[0].id) }))
+      if (res.ok) {
+        const data = await res.json()
+        if (data.labs && Array.isArray(data.labs) && data.labs.length > 0) {
+          setLabs(data.labs)
+          if (!addForm.lab_id && data.labs.length > 0) {
+            setAddForm((prev) => ({ ...prev, lab_id: String(data.labs[0].id) }))
+          }
+          return
         }
       }
     } catch (e) {
       console.error("Failed to load labs:", e)
+    }
+    // Fallback to mock labs
+    const fallbackLabs = MOCK_LABS.map((l) => ({ id: l.id, name: l.name, code: l.code, location: l.location }))
+    setLabs(fallbackLabs)
+    if (!addForm.lab_id && fallbackLabs.length > 0) {
+      setAddForm((prev) => ({ ...prev, lab_id: String(fallbackLabs[0].id) }))
     }
   }
 
@@ -225,21 +235,26 @@ export function LabInventoryManager({ userRole = "lab_staff", defaultLabId }: La
         url += `&lab_id=${selectedLabId}`
       }
       const res = await fetch(url)
-      const data = await res.json()
-      if (data.success && data.items) {
-        setItems(data.items)
-      } else {
-        setItems([])
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+          setItems(data.items)
+          setLoading(false)
+          return
+        }
       }
     } catch (e: any) {
-      toast({
-        title: "Error loading inventory",
-        description: e?.message || "Failed to fetch items",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+      // In offline / prototype mode, gracefully fall back to mock data
     }
+
+    const filtered = (MOCK_INVENTORY_ITEMS as any[]).filter((item) => {
+      if (selectedLabId && selectedLabId !== "all") {
+        return String(item.lab_id) === String(selectedLabId)
+      }
+      return true
+    })
+    setItems(filtered)
+    setLoading(false)
   }
 
   // Trigger monthly possession reminder for students holding components

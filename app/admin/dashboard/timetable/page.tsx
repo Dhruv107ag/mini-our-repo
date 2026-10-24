@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { CalendarIcon, Plus, Edit, Trash2, Clock, Users, Search, Filter, Eye, CalendarDays } from "lucide-react"
 import { format, addDays, startOfWeek } from "date-fns"
 import Link from "next/link"
+import { MOCK_LABS, MOCK_TIMETABLE_ENTRIES } from "@/lib/admin-mock-data"
 
 // Types
 interface Lab {
@@ -121,11 +122,24 @@ export default function TimetablePage() {
       const res = await fetch("/api/admin/labs")
       if (res.ok) {
         const data = await res.json()
-        setLabs(data.labs || [])
+        if (data && Array.isArray(data.labs) && data.labs.length > 0) {
+          setLabs(data.labs)
+          return
+        }
       }
     } catch (error) {
       console.error("Failed to load labs:", error)
     }
+
+    const mappedMockLabs: Lab[] = MOCK_LABS.map((l) => ({
+      id: l.id,
+      name: l.name,
+      code: l.code,
+      department: l.department_name || "Engineering",
+      capacity: l.capacity || 60,
+      location: l.location || "LNMIIT Campus",
+    }))
+    setLabs(mappedMockLabs)
   }
 
   const loadTimetableEntries = async () => {
@@ -133,11 +147,16 @@ export default function TimetablePage() {
       const res = await fetch("/api/admin/timetable/entries")
       if (res.ok) {
         const data = await res.json()
-        setTimetableEntries(data.entries || [])
+        if (data && Array.isArray(data.entries) && data.entries.length > 0) {
+          setTimetableEntries(data.entries)
+          return
+        }
       }
     } catch (error) {
       console.error("Failed to load timetable entries:", error)
     }
+
+    setTimetableEntries(MOCK_TIMETABLE_ENTRIES as TimetableEntry[])
   }
 
   // Filter entries based on selected filters

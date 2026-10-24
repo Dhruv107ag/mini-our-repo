@@ -96,184 +96,267 @@ export default function LabCoordinatorDashboardPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold">Lab Coordinator Dashboard</h1>
-        <p className="text-muted-foreground">
-          Manage your department labs and track activities
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Labs Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/hod/dashboard/labs')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Labs</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.totalLabs}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Department laboratories
+    <div className="space-y-6">
+      {/* Coordinator Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-purple-200/80 bg-gradient-to-r from-white via-purple-50/50 to-indigo-50/40 p-5 md:p-6 shadow-xs admin-appear-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100/80 text-purple-800 border border-purple-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Coordinator Session
+              </span>
+              <span className="text-xs text-slate-400 font-medium">• LNMIIT Jaipur</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+              Lab Coordinator <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">Desk</span>
+            </h1>
+            <p className="text-xs md:text-sm text-slate-600">
+              Department laboratory oversight, cross-lab resource scheduling, inventory audits, and booking authorizations.
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Components Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/hod/dashboard/labs')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Components</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.totalComponents}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all labs
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Pending Approvals Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-orange-200 bg-orange-50/50" onClick={() => router.push('/hod/dashboard/approvals')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{loading ? '...' : stats.pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Requires your action
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Approved Requests Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/hod/dashboard/approvals')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved Requests</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{loading ? '...' : stats.approvedRequests}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Successfully approved
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Rejected Requests Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/hod/dashboard/approvals')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected Requests</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{loading ? '...' : stats.rejectedRequests}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Declined requests
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Low Stock Warning Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-yellow-200 bg-yellow-50/50" onClick={() => router.push('/hod/dashboard/labs')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{loading ? '...' : stats.lowStockComponents}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Components need restocking
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Button 
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-xs transition-all duration-200 hover:shadow-md"
+              onClick={() => router.push('/hod/dashboard/approvals')}
+            >
+              <CheckCircle className="h-4 w-4 mr-1.5" />
+              Review Approvals
+              {stats.pendingApprovals > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[11px] font-bold">
+                  {stats.pendingApprovals}
+                </span>
+              )}
+            </Button>
             <Button 
               variant="outline" 
-              className="w-full justify-between" 
+              className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium rounded-xl shadow-2xs"
+              onClick={() => router.push('/hod/dashboard/labs')}
+            >
+              <Building className="h-4 w-4 mr-1.5 text-slate-500" />
+              Department Labs
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Grid - 6 Color-Coded Metric Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Total Labs */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-indigo-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/labs')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Department Labs</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.totalLabs}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/70 flex items-center justify-center">
+              <Building className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Managed laboratory rooms</span>
+            <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded">Facilities</span>
+          </div>
+        </div>
+
+        {/* Total Components */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/labs')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Asset Catalog</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.totalComponents}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/70 flex items-center justify-center">
+              <Package className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Aggregated equipment items</span>
+            <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Inventory</span>
+          </div>
+        </div>
+
+        {/* Pending Approvals */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-amber-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/approvals')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Pending Approvals</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.pendingApprovals}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/70 flex items-center justify-center">
+              <Clock className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Awaiting coordinator sign-off</span>
+            <span className="font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded">Requires Action</span>
+          </div>
+        </div>
+
+        {/* Approved Requests */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-teal-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/approvals')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Approved Reservations</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.approvedRequests}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-600 border border-teal-200/70 flex items-center justify-center">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Sanctioned lab usage</span>
+            <span className="font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded">Authorized</span>
+          </div>
+        </div>
+
+        {/* Rejected Requests */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-rose-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/approvals')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Declined / Revoked</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.rejectedRequests}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/70 flex items-center justify-center">
+              <XCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Declined applications</span>
+            <span className="font-bold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">Declined</span>
+          </div>
+        </div>
+
+        {/* Low Stock Warning */}
+        <div 
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs border-t-4 border-t-orange-500 hover:shadow-md transition-all duration-200 cursor-pointer"
+          onClick={() => router.push('/hod/dashboard/labs')}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Low Stock Warnings</p>
+              <p className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">{loading ? "..." : stats.lowStockComponents}</p>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-orange-50 text-orange-600 border border-orange-200/70 flex items-center justify-center">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+            <span>Stock below 30% threshold</span>
+            <span className="font-bold text-orange-700 bg-orange-50 px-1.5 py-0.2 rounded">Restock</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions & Coordination Alerts */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-200/70 pb-3 pt-3.5 px-5">
+            <h3 className="text-sm font-bold text-slate-900">Coordinator Portals</h3>
+          </CardHeader>
+          <CardContent className="p-4 space-y-2.5">
+            <Button 
+              variant="outline" 
+              className="w-full justify-between rounded-xl border-slate-200 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-200 text-slate-700 font-medium" 
               onClick={() => router.push('/hod/dashboard/approvals')}
             >
               <span className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4 text-amber-600" />
                 Review Pending Approvals
               </span>
-              {stats.pendingApprovals > 0 && (
-                <Badge variant="destructive">{stats.pendingApprovals}</Badge>
-              )}
-              <ArrowRight className="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                {stats.pendingApprovals > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    {stats.pendingApprovals}
+                  </span>
+                )}
+                <ArrowRight className="h-4 w-4 text-slate-400" />
+              </div>
             </Button>
             <Button 
               variant="outline" 
-              className="w-full justify-between" 
+              className="w-full justify-between rounded-xl border-slate-200 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 text-slate-700 font-medium" 
               onClick={() => router.push('/hod/dashboard/labs')}
             >
               <span className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
+                <Package className="h-4 w-4 text-emerald-600" />
                 Manage Lab Inventory
               </span>
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Button>
             <Button 
               variant="outline" 
-              className="w-full justify-between" 
-              onClick={() => router.push('/hod/dashboard/reports')}
+              className="w-full justify-between rounded-xl border-slate-200 hover:bg-purple-50 hover:text-purple-800 hover:border-purple-200 text-slate-700 font-medium" 
+              onClick={() => router.push('/hod/dashboard/analytics')}
             >
               <span className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Generate Reports
+                <FileText className="h-4 w-4 text-purple-600" />
+                Lab Operations Analytics
               </span>
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 text-slate-400" />
             </Button>
           </CardContent>
         </Card>
 
         {/* Alerts/Notifications */}
-        {(stats.pendingApprovals > 0 || stats.lowStockComponents > 0) && (
-          <Card className="border-orange-200 bg-orange-50/50">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-600" />
-                Attention Required
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {stats.pendingApprovals > 0 && (
-                <div className="flex items-start gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-orange-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Pending Approvals</p>
-                    <p className="text-muted-foreground">
-                      You have {stats.pendingApprovals} request{stats.pendingApprovals !== 1 ? 's' : ''} waiting for approval
-                    </p>
-                  </div>
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-200/70 pb-3 pt-3.5 px-5">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-purple-600" />
+              Coordinator Alerts
+            </h3>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
+            {stats.pendingApprovals > 0 ? (
+              <div className="flex items-start gap-3 p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs">
+                <Clock className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-bold text-amber-950">Pending Approvals Escalation</p>
+                  <p className="text-amber-800/90 mt-0.5 leading-relaxed">
+                    You have <strong className="text-amber-950">{stats.pendingApprovals} request{stats.pendingApprovals !== 1 ? 's' : ''}</strong> waiting for your approval.
+                  </p>
                 </div>
-              )}
-              {stats.lowStockComponents > 0 && (
-                <div className="flex items-start gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Low Stock Alert</p>
-                    <p className="text-muted-foreground">
-                      {stats.lowStockComponents} component{stats.lowStockComponents !== 1 ? 's are' : ' is'} running low on stock
-                    </p>
-                  </div>
+              </div>
+            ) : null}
+            {stats.lowStockComponents > 0 ? (
+              <div className="flex items-start gap-3 p-3 bg-orange-50/70 border border-orange-200/80 rounded-xl text-xs">
+                <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-bold text-orange-950">Low Stock Replenishment Notice</p>
+                  <p className="text-orange-800/90 mt-0.5 leading-relaxed">
+                    <strong className="text-orange-950">{stats.lowStockComponents} component{stats.lowStockComponents !== 1 ? 's' : ''}</strong> running low on stock in laboratories.
+                  </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+              </div>
+            ) : null}
+            {stats.pendingApprovals === 0 && stats.lowStockComponents === 0 && (
+              <div className="text-center py-6 text-slate-400 text-xs">
+                <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                <p className="font-bold text-slate-800">All Operations Clear</p>
+                <p className="text-slate-500 mt-1">No pending escalations or urgent alerts for your coordination area.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
+  )
+}
   )
 }
 

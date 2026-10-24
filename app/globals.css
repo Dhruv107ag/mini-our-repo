@@ -128,3 +128,297 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbars completely */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Login Page Ultra-Smooth GPU-Composited Entrance Animations */
+@keyframes loginCardSmoothEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes loginHeaderSmoothEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes loginFooterSmoothEntrance {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-login-header {
+  animation: loginHeaderSmoothEntrance 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.animate-login-card {
+  animation: loginCardSmoothEntrance 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.08s;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.animate-login-footer {
+  animation: loginFooterSmoothEntrance 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.2s;
+  will-change: opacity;
+}
+
+/* ==========================================================================
+   Admin Panel Design System - Premium Light Theme with Vibrant Coloring
+   Pure crisp light backgrounds, soft cards, elegant colorful accent palettes,
+   clean borders, and smooth transitions.
+   ========================================================================== */
+
+.admin-panel,
+.admin-panel.light {
+  color-scheme: light !important;
+  --radius: 0.75rem;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --secondary: #d97706;
+  --secondary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eff6ff;
+  --accent-foreground: #1e40af;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #3b82f6;
+}
+
+/* Force light theme colors on all standard elements inside admin-panel */
+.admin-panel {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Retain pill shape only for micro status indicators when explicitly rounded-full */
+.admin-panel .rounded-full.status-dot,
+.admin-panel .status-indicator {
+  border-radius: 9999px !important;
+}
+
+/* Crisp light cards with soft shadows for all admin containers */
+.admin-card-shadow,
+.admin-panel [data-slot="card"],
+.admin-panel .bg-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.admin-card-shadow:hover,
+.admin-panel [data-slot="card"]:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.02) !important;
+}
+
+/* Admin Table Crisp Light Styling */
+.admin-panel th {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.admin-panel tr {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.admin-panel tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Admin Tabs Soft Styling */
+.admin-panel [role="tablist"],
+.admin-panel [data-slot="tabs-list"] {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.625rem !important;
+  padding: 3px !important;
+}
+
+.admin-panel [role="tab"][data-state="active"],
+.admin-panel [data-slot="tabs-trigger"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1e40af !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08) !important;
+  border-radius: 0.5rem !important;
+  font-weight: 700 !important;
+}
+
+.admin-panel [role="tab"],
+.admin-panel [data-slot="tabs-trigger"] {
+  border-radius: 0.5rem !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+/* Admin Inputs Clean Light Styling */
+.admin-panel input,
+.admin-panel select,
+.admin-panel textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.5rem !important;
+}
+
+.admin-panel input:focus-visible,
+.admin-panel select:focus-visible {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+
+/* GPU-Composited Appearing Animations for Text and Cards */
+@keyframes adminCardEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes adminTextEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.admin-appear-card {
+  animation: adminCardEntrance 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.admin-appear-text {
+  animation: adminTextEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Admin Vibrant Color Badges */
+.admin-badge-blue {
+  color: #1e40af !important;
+  background-color: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+.admin-badge-indigo {
+  color: #4338ca !important;
+  background-color: #eef2ff !important;
+  border: 1px solid #c7d2fe !important;
+}
+
+.admin-badge-emerald {
+  color: #065f46 !important;
+  background-color: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.admin-badge-amber {
+  color: #92400e !important;
+  background-color: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+}
+
+.admin-badge-purple {
+  color: #6b21a8 !important;
+  background-color: #faf5ff !important;
+  border: 1px solid #e9d5ff !important;
+}
+
+.admin-badge-rose {
+  color: #9f1239 !important;
+  background-color: #fff1f2 !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+.admin-badge-sky {
+  color: #0369a1 !important;
+  background-color: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+}
+
+.admin-badge-teal {
+  color: #115e59 !important;
+  background-color: #f0fdfa !important;
+  border: 1px solid #99f6e4 !important;
+}
+
+/* Sidebar Navigation Item Hover & Active states */
+.admin-nav-item {
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-nav-item:hover {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  transform: translateX(2px);
+}
+
+.admin-card-interactive {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-card-interactive:hover {
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.03) !important;
+  transform: translateY(-2px);
+}
+
+

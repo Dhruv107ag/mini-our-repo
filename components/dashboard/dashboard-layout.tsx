@@ -25,9 +25,10 @@ interface DashboardLayoutProps { user: User; children?: ReactNode }
  */
 export function DashboardLayout({ user, children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isAdmin = user?.role === "admin"
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="dashboard-panel admin-panel light flex h-screen bg-slate-50/80 text-slate-900 font-sans antialiased">
       {/* Sidebar */}
       <DashboardSidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -37,7 +38,7 @@ export function DashboardLayout({ user, children }: DashboardLayoutProps) {
         <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Dashboard Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 bg-slate-50/80">{children}</main>
       </div>
     </div>
   )

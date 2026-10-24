@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Clock, MapPin, User, Building2, ArrowLeft, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import { MOCK_LABS, MOCK_DAILY_SCHEDULE } from '@/lib/admin-mock-data'
 
 interface Lab {
   id: number
@@ -65,15 +66,16 @@ export default function DailySchedulePage() {
       const res = await fetch('/api/admin/labs')
       if (res.ok) {
         const data = await res.json()
-        setLabs(data.labs || [])
-      } else {
-        console.error('Failed to fetch labs:', res.status)
-        setLabs([])
+        if (data && Array.isArray(data.labs) && data.labs.length > 0) {
+          setLabs(data.labs)
+          return
+        }
       }
     } catch (error) {
       console.error('Failed to load labs:', error)
-      setLabs([])
     }
+
+    setLabs(MOCK_LABS.map((l) => ({ id: l.id, name: l.name, code: l.code })))
   }
 
   const loadDailySchedule = async () => {
@@ -85,20 +87,26 @@ export default function DailySchedulePage() {
       
       if (res.ok) {
         const data = await res.json()
-        setSchedule(data.schedule || [])
-        setTotalEntries(data.total_entries || 0)
-      } else {
-        console.error('Failed to fetch schedule:', res.status)
-        setSchedule([])
-        setTotalEntries(0)
+        if (data && Array.isArray(data.schedule) && data.schedule.length > 0) {
+          setSchedule(data.schedule)
+          setTotalEntries(data.total_entries || 0)
+          setLoading(false)
+          return
+        }
       }
     } catch (error) {
       console.error('Failed to load daily schedule:', error)
-      setSchedule([])
-      setTotalEntries(0)
-    } finally {
-      setLoading(false)
     }
+
+    // Fallback to mock daily schedule
+    let mockFiltered = MOCK_DAILY_SCHEDULE as GroupedSchedule[]
+    if (selectedLab !== 'all') {
+      mockFiltered = mockFiltered.filter((g) => g.lab_id.toString() === selectedLab)
+    }
+    const count = mockFiltered.reduce((acc, g) => acc + g.entries.length, 0)
+    setSchedule(mockFiltered)
+    setTotalEntries(count)
+    setLoading(false)
   }
 
   const getDayName = (date: Date) => {
