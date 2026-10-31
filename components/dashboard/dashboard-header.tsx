@@ -60,8 +60,11 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       student: "Student",
       faculty: "Faculty",
       "lab-staff": "Lab Staff",
+      "lab_staff": "Lab Staff",
       hod: "Head of Department (HoD)",
       admin: "Administrator",
+      "center-lead": "Center Lead",
+      center_lead: "Center Lead",
       others: "Others",
     }
     return roleMap[role] || role
@@ -75,6 +78,8 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       "lab_staff": "/lab-staff/dashboard/settings",
       hod: "/hod/dashboard/settings",
       admin: "/admin/dashboard/settings",
+      "center-lead": "/center-lead/dashboard/settings",
+      center_lead: "/center-lead/dashboard/settings",
       others: "/others/dashboard/settings",
     }
     return roleMap[role] || "/dashboard/settings"

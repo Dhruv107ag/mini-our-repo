@@ -14,6 +14,7 @@ const roleMap: Array<{ pattern: RegExp; roles: string[] }> = [
   { pattern: /^\/lab-staff(?:\/|$)/, roles: ["lab_staff", "admin"] },
   { pattern: /^\/student(?:\/|$)/, roles: ["student", "admin"] },
   { pattern: /^\/others(?:\/|$)/, roles: ["others", "admin"] },
+  { pattern: /^\/center-lead(?:\/|$)/, roles: ["center_lead", "admin"] },
   // APIs (canonical)
   { pattern: /^\/api\/admin(?:\/|$)/, roles: ["admin"] },
   { pattern: /^\/api\/hod(?:\/|$)/, roles: ["hod", "faculty", "lab_coordinator", "admin"] },
@@ -21,6 +22,7 @@ const roleMap: Array<{ pattern: RegExp; roles: string[] }> = [
   { pattern: /^\/api\/student(?:\/|$)/, roles: ["student", "admin"] },
   { pattern: /^\/api\/faculty(?:\/|$)/, roles: ["faculty", "admin"] },
   { pattern: /^\/api\/lab-staff(?:\/|$)/, roles: ["lab_staff", "admin"] },
+  { pattern: /^\/api\/center-lead(?:\/|$)/, roles: ["center_lead", "admin"] },
 ]
 
 export function middleware(req: NextRequest) {
@@ -37,6 +39,7 @@ export function middleware(req: NextRequest) {
       // Map backend role codes to path segments
       if (role === "lab_staff") role = "lab-staff"
       if (role === "lab_coordinator") role = "lab-coordinator"
+      if (role === "center_lead") role = "center-lead"
       if (!role) return NextResponse.redirect(new URL("/", req.url))
       const rest = pathname.slice("/dashboard".length) || ""
       return NextResponse.redirect(new URL(`/${role}/dashboard${rest}`, req.url))
@@ -93,6 +96,7 @@ export const config = {
     "/faculty/:path*",
     "/lab-staff/:path*",
     "/student/:path*",
+    "/center-lead/:path*",
     "/tnp/:path*",
     "/api/:path*",
   ],

@@ -10,6 +10,7 @@ export const ROLES = {
   HOD: "hod", // kept for backward-compat, not used for HoD assignment
   LAB_COORDINATOR: "lab_coordinator", // Faculty member assigned as department lab coordinator
   ADMIN: "admin",
+  CENTER_LEAD: "center_lead", // Center Lead for specialized center inventory, purchase & issues
 } as const
 
 export type Role = typeof ROLES[keyof typeof ROLES]

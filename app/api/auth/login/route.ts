@@ -17,6 +17,7 @@ const mockUsers: any[] = [
   { id: "8", email: "hod@lnmiit.ac.in", password: "123", role: "hod", name: "Dr. HOD User", department: "CSE" },
   { id: "9", email: "coordinator@lnmiit.ac.in", password: "123", role: "lab_coordinator", name: "Lab Coordinator", department: "CSE" },
   { id: "10", email: "other@lnmiit.ac.in", password: "123", role: "others", name: "Other User", department: "CCE" },
+  { id: "11", email: "centerlead@lnmiit.ac.in", password: "123", role: "center_lead", name: "Center Lead", department: "Center for Advanced Studies" },
 ]
 
 export async function POST(request: NextRequest) {

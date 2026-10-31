@@ -17,6 +17,7 @@ const defaultMockUsers = [
 	{ id: 6, email: "23ucs123@lnmiit.ac.in", name: "Ram Sharma", role: "student", department: "CSE", student_id: "23UCS123", is_active: 1, created_at: "2025-01-06T10:00:00Z" },
 	{ id: 7, email: "student@lnmiit.ac.in", name: "Student User", role: "student", department: "CSE", student_id: "23UCS001", is_active: 1, created_at: "2025-01-07T10:00:00Z" },
 	{ id: 8, email: "other@lnmiit.ac.in", name: "Other Staff", role: "others", department: "CCE", salutation: "mr", is_active: 1, created_at: "2025-01-08T10:00:00Z" },
+	{ id: 9, email: "centerlead@lnmiit.ac.in", name: "Center Lead", role: "center_lead", department: "Center for Advanced Studies", salutation: "prof", is_active: 1, created_at: "2025-01-09T10:00:00Z" },
 ]
 
 export async function GET(req: NextRequest) {

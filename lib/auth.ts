@@ -49,8 +49,9 @@ export function hasRole(user: AuthUser, allowedRoles: string[]): boolean {
 
 // Role hierarchy for permissions
 export const roleHierarchy = {
-  admin: ["admin", "hod", "faculty", "lab_staff", "others", "student"],
+  admin: ["admin", "hod", "faculty", "lab_staff", "others", "student", "center_lead"],
   hod: ["hod", "faculty", "lab_staff", "student"],
+  center_lead: ["center_lead", "student"],
   faculty: ["faculty", "student"],
   lab_staff: ["lab_staff", "student"],
   others: ["others", "student"],

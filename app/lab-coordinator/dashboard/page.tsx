@@ -357,6 +357,3 @@ export default function LabCoordinatorDashboardPage() {
     </div>
   )
 }
-  )
-}
-

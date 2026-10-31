@@ -23,6 +23,7 @@ import {
   History,
   ArrowLeftRight,
   Clock,
+  ShoppingCart,
 } from "lucide-react"
 
 interface User {
@@ -49,8 +50,8 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
   const router = useRouter()
   const pathname = usePathname()
 
-  // Compute optional role prefix from current URL (e.g., /admin, /student)
-  const roleMatch = pathname?.match(/^\/(admin|student|faculty|lab-staff|hod|lab-coordinator|others)(?:\/|$)/)
+  // Compute optional role prefix from current URL (e.g., /admin, /student, /center-lead)
+  const roleMatch = pathname?.match(/^\/(admin|student|faculty|lab-staff|hod|lab-coordinator|others|center-lead)(?:\/|$)/)
   const prefix = roleMatch ? `/${roleMatch[1]}` : ""
 
   const withPrefix = (p: string) => `${prefix}${p}`
@@ -112,6 +113,15 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
           { name: "Approvals", href: withPrefix("/dashboard/approvals"), icon: UserCheck, color: "amber" },
           { name: "View Logs", href: withPrefix("/dashboard/logs"), icon: History, color: "slate" },
           { name: "Analytics", href: withPrefix("/dashboard/analytics"), icon: BarChart3, color: "sky" },
+        ]
+
+      case "center_lead":
+      case "center-lead":
+        return [
+          ...baseItems,
+          { name: "Dept Purchase", href: withPrefix("/dashboard/purchase"), icon: ShoppingCart },
+          { name: "Center Inventory", href: withPrefix("/dashboard/inventory"), icon: Package },
+          { name: "Issue & Return", href: withPrefix("/dashboard/issue-return"), icon: ArrowLeftRight },
         ]
 
       case "admin":

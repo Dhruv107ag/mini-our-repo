@@ -49,6 +49,7 @@ export function LoginForm() {
   // User roles available in the system
   const userRoles = [
     { value: "admin", label: "Administrator" },
+    { value: "center-lead", label: "Center Lead" },
     { value: "lab-staff", label: "Lab Staff" },
     { value: "faculty", label: "Faculty" },
     { value: "hod", label: "Head of Department (HoD)" },

@@ -365,6 +365,7 @@ export default function UsersPage() {
                 <SelectItem value="student">Student</SelectItem>
                 <SelectItem value="faculty">Faculty</SelectItem>
                 <SelectItem value="lab_staff">Lab Staff</SelectItem>
+                <SelectItem value="center_lead">Center Lead</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="others">Others</SelectItem>
               </SelectContent>
@@ -547,6 +548,7 @@ export default function UsersPage() {
                     <SelectItem value="student">Student</SelectItem>
                     <SelectItem value="faculty">Faculty</SelectItem>
                     <SelectItem value="lab_staff">Lab Staff</SelectItem>
+                    <SelectItem value="center_lead">Center Lead</SelectItem>
                     <SelectItem value="others">Others</SelectItem>
                   </SelectContent>
                 </Select>
@@ -617,6 +619,7 @@ export default function UsersPage() {
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="faculty">Faculty</SelectItem>
                   <SelectItem value="lab_staff">Lab Staff</SelectItem>
+                  <SelectItem value="center_lead">Center Lead</SelectItem>
                   <SelectItem value="others">Others</SelectItem>
                 </SelectContent>
               </Select>
