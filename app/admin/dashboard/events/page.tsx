@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function AdminEventsPage() {
-  redirect("/admin/dashboard/daily-schedule")
+export default function AdminRedirect() {
+  redirect("/admin/dashboard")
 }

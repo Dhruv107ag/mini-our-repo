@@ -14,10 +14,9 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // Legacy path to new admin route
       {
         source: "/admin/dashboard/organization",
-        destination: "/admin/dashboard/department-and-lab-management",
+        destination: "/admin/dashboard",
       },
     ]
   },

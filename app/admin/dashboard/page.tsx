@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Users,
+  UserCheck,
+  Settings,
   FlaskConical,
   Calendar,
   Clock,
@@ -360,7 +362,7 @@ export default function AdminDashboardPage() {
               Administrative Command Portals
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Direct access for academic timetables, daily scheduling, departmental governance, and asset inventory
+              Direct access for user management, academic master timetable, authorizations & approvals, and system settings
             </p>
           </div>
           <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-blue-700 font-semibold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/60">

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function OrganizationPage() {
-  redirect("/admin/dashboard/department-and-lab-management")
+export default function AdminRedirect() {
+  redirect("/admin/dashboard")
 }

@@ -368,16 +368,16 @@ export default function AdminApprovalsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/admin/dashboard/department-and-lab-management">
+          <Link href="/admin/users">
             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-              <Building2 className="h-3.5 w-3.5 text-indigo-600" />
-              Manage Labs
+              <User className="h-3.5 w-3.5 text-purple-600" />
+              User Management
             </Button>
           </Link>
-          <Link href="/admin/dashboard/daily-schedule">
+          <Link href="/admin/dashboard/timetable">
             <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-              <Calendar className="h-3.5 w-3.5 text-rose-600" />
-              Daily Schedule
+              <Calendar className="h-3.5 w-3.5 text-amber-600" />
+              Master Timetable
             </Button>
           </Link>
         </div>
