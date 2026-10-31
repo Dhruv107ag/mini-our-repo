@@ -128,12 +128,8 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
       case "admin":
         return [
           { name: "Command Dashboard", href: "/admin/dashboard", icon: Home, color: "blue" },
-          { name: "Department & Lab Governance", href: "/admin/dashboard/department-and-lab-management", icon: Building, color: "indigo" },
-          { name: "Lab Asset Inventory", href: "/admin/dashboard/inventory", icon: Package, color: "emerald" },
           { name: "User Management", href: "/admin/users", icon: Users, color: "purple" },
           { name: "Master Timetable", href: "/admin/dashboard/timetable", icon: Calendar, color: "amber" },
-          { name: "Daily Lab Schedule", href: "/admin/dashboard/daily-schedule", icon: Clock, color: "rose" },
-          { name: "System Analytics", href: "/admin/dashboard/analytics", icon: BarChart3, color: "sky" },
           { name: "Authorizations & Approvals", href: "/admin/dashboard/approvals", icon: UserCheck, color: "teal" },
           { name: "System Settings", href: "/admin/dashboard/settings", icon: Settings, color: "slate" },
         ]

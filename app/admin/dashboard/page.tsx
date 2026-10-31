@@ -235,9 +235,9 @@ export default function AdminDashboardPage() {
               size="sm"
               className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold h-9 px-4 text-xs rounded-xl shadow-sm shadow-blue-500/20 transition-all duration-200 transform hover:-translate-y-0.5"
             >
-              <Link href="/admin/dashboard/department-and-lab-management">
-                <Building className="h-3.5 w-3.5 mr-2 text-blue-100" />
-                Manage Labs & Depts
+              <Link href="/admin/users">
+                <Users className="h-3.5 w-3.5 mr-2 text-blue-100" />
+                User Management
               </Link>
             </Button>
           </div>
@@ -372,22 +372,22 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Portal 1: Daily Schedule (Rose Accent) */}
+          {/* Portal 1: User Management (Purple Accent) */}
           <Link
-            href="/admin/dashboard/daily-schedule"
-            className="admin-card-interactive group bg-white border-l-4 border-l-rose-500 border-y border-r border-slate-200/80 p-5 rounded-2xl flex flex-col justify-between min-h-[120px] hover:border-rose-300 hover:bg-rose-50/20"
+            href="/admin/users"
+            className="admin-card-interactive group bg-white border-l-4 border-l-purple-500 border-y border-r border-slate-200/80 p-5 rounded-2xl flex flex-col justify-between min-h-[120px] hover:border-purple-300 hover:bg-purple-50/20"
           >
             <div className="flex items-center justify-between">
-              <div className="h-10 w-10 bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-rose-100 rounded-xl">
-                <Clock className="h-5 w-5" />
+              <div className="h-10 w-10 bg-purple-50 border border-purple-200/80 text-purple-600 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-purple-100 rounded-xl">
+                <Users className="h-5 w-5" />
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-1 transition-all duration-200" />
+              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all duration-200" />
             </div>
             <div className="mt-3">
-              <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-rose-900 transition-colors">
-                Daily Lab Schedule
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-purple-900 transition-colors">
+                User Management
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Live room occupancy & slots</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Student, faculty & staff directory</p>
             </div>
           </Link>
 
@@ -410,41 +410,41 @@ export default function AdminDashboardPage() {
             </div>
           </Link>
 
-          {/* Portal 3: Governance & Labs (Indigo Accent) */}
+          {/* Portal 3: Approvals (Emerald Accent) */}
           <Link
-            href="/admin/dashboard/department-and-lab-management"
-            className="admin-card-interactive group bg-white border-l-4 border-l-indigo-500 border-y border-r border-slate-200/80 p-5 rounded-2xl flex flex-col justify-between min-h-[120px] hover:border-indigo-300 hover:bg-indigo-50/20"
-          >
-            <div className="flex items-center justify-between">
-              <div className="h-10 w-10 bg-indigo-50 border border-indigo-200/80 text-indigo-600 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-indigo-100 rounded-xl">
-                <Building className="h-5 w-5" />
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all duration-200" />
-            </div>
-            <div className="mt-3">
-              <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-indigo-900 transition-colors">
-                Governance & Labs
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Depts, HoDs & lab staff</p>
-            </div>
-          </Link>
-
-          {/* Portal 4: Lab Inventory (Emerald Accent) */}
-          <Link
-            href="/admin/dashboard/inventory"
+            href="/admin/dashboard/approvals"
             className="admin-card-interactive group bg-white border-l-4 border-l-emerald-500 border-y border-r border-slate-200/80 p-5 rounded-2xl flex flex-col justify-between min-h-[120px] hover:border-emerald-300 hover:bg-emerald-50/20"
           >
             <div className="flex items-center justify-between">
               <div className="h-10 w-10 bg-emerald-50 border border-emerald-200/80 text-emerald-600 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-emerald-100 rounded-xl">
-                <PackageCheck className="h-5 w-5" />
+                <UserCheck className="h-5 w-5" />
               </div>
               <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all duration-200" />
             </div>
             <div className="mt-3">
               <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-emerald-900 transition-colors">
-                Asset & Inventory
+                Central Approvals
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Components, kits & equipment</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Booking queues & authorizations</p>
+            </div>
+          </Link>
+
+          {/* Portal 4: Settings (Slate Accent) */}
+          <Link
+            href="/admin/dashboard/settings"
+            className="admin-card-interactive group bg-white border-l-4 border-l-slate-600 border-y border-r border-slate-200/80 p-5 rounded-2xl flex flex-col justify-between min-h-[120px] hover:border-slate-400 hover:bg-slate-50/40"
+          >
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-slate-200 rounded-xl">
+                <Settings className="h-5 w-5" />
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-1 transition-all duration-200" />
+            </div>
+            <div className="mt-3">
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-slate-950 transition-colors">
+                System Settings
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">Institutions & account credentials</p>
             </div>
           </Link>
         </div>
@@ -632,9 +632,9 @@ export default function AdminDashboardPage() {
               size="sm"
               className="w-full text-xs h-9 border-slate-200 text-slate-700 hover:border-blue-300 hover:text-blue-800 hover:bg-blue-50/50 rounded-xl shadow-xs font-bold transition-all duration-200"
             >
-              <Link href="/admin/dashboard/department-and-lab-management">
-                <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
-                Configure Department Authorities
+              <Link href="/admin/users">
+                <Users className="h-3.5 w-3.5 mr-1.5 text-purple-600" />
+                Manage Campus Users & Accounts
               </Link>
             </Button>
           </div>
