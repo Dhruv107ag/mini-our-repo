@@ -793,57 +793,51 @@ SMTP_FROM=LNMIIT Lab Management <your_email@gmail.com>
 
 ## 🛠️ Setup & Development
 
-**Prerequisites:**
-- Node.js v18+
-- pnpm (or npm/yarn)
-- MySQL 8.0+
-- Git
+### System Requirements
+- **Node.js**: v18.18+, v20.x, or v22.x
+- **Package Manager**: pnpm 9+ (`npm install -g pnpm`)
+- **Git**: 2.30+
+- **Database (Optional)**: MySQL 8.0+ / MariaDB 10.5+
 
-**Quick Start:**
+### Full Workflow:
 
-1. **Clone & Install:**
+1. **Clone & Install Dependencies:**
    ```bash
-   git clone https://github.com/abhinavdogra21/lab-managment-system.git
-   cd lab-managment-system
+   git clone https://github.com/Dhruv107ag/mini-our-repo.git
+   cd mini-our-repo
    pnpm install
    ```
 
-2. **Database Setup:**
+2. **Environment Configuration:**
+   Copy the provided `.env.example` to `.env.local`:
    ```bash
-   mysql -u root -p
-   CREATE DATABASE lnmiit_lab_management;
-   exit;
-   mysql -u root -p lnmiit_lab_management < scripts/database-schema.sql
+   cp .env.example .env.local
+   # Windows PowerShell:
+   # Copy-Item .env.example .env.local
    ```
+   Select your mode in `.env.local`:
+   - `USE_DB_AUTH=false`: Runs in offline demo mode using pre-configured mock stores (Zero database configuration required).
+   - `USE_DB_AUTH=true`: Connects to local MySQL instance.
 
-3. **Create Admin User:**
+3. **Database Migration (If USE_DB_AUTH=true):**
    ```bash
-   mysql -u root -p lnmiit_lab_management
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS lnmiit_lab_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   mysql -u root -p lnmiit_lab_management < scripts/data-base-schema.sql
+   mysql -u root -p lnmiit_lab_management < scripts/migration-add-center-lead.sql
    ```
-   ```sql
-   INSERT INTO users (email, password_hash, name, role, department, is_active, created_at, updated_at)
-   VALUES ('admin@lnmiit.ac.in', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', 'Admin', 'admin', 'IT', 1, NOW(), NOW());
-   ```
-   **Login:** `admin@lnmiit.ac.in` / Password: `123`
 
-4. **Configure Environment:**
-   - Copy `.env.local.example` to `.env.local`
-   - Fill in database credentials and Gmail App Password
-   - See [Environment Configuration](#🛠️-environment-configuration) section above
-
-5. **Run Development Server:**
+4. **Launch Application:**
    ```bash
    pnpm dev
    ```
-   Open [http://localhost:3000](http://localhost:3000)
+   Visit **[http://localhost:3000](http://localhost:3000)** and sign in with any default account (`admin@lnmiit.ac.in`, `centerlead@lnmiit.ac.in`, etc. with password `123`).
 
-6. **Build for Production:**
+5. **Production Verification & Build:**
    ```bash
+   pnpm exec tsc --noEmit
    pnpm build
    pnpm start
    ```
-
-**Detailed Setup:** See [SETUP.md](SETUP.md) for complete installation guide.
 
 ---
 
