@@ -51,7 +51,7 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
   const pathname = usePathname()
 
   // Compute optional role prefix from current URL (e.g., /admin, /student, /center-lead)
-  const roleMatch = pathname?.match(/^\/(admin|student|faculty|lab-staff|hod|lab-coordinator|others|center-lead)(?:\/|$)/)
+  const roleMatch = pathname?.match(/^\/(admin|student|faculty|lab-staff|hod|lab-coordinator|others|center-lead|center-lead)(?:\/|$)/)
   const prefix = roleMatch ? `/${roleMatch[1]}` : ""
 
   const withPrefix = (p: string) => `${prefix}${p}`
@@ -119,9 +119,10 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
       case "center-lead":
         return [
           ...baseItems,
-          { name: "Dept Purchase", href: withPrefix("/dashboard/purchase"), icon: ShoppingCart },
-          { name: "Center Inventory", href: withPrefix("/dashboard/inventory"), icon: Package },
-          { name: "Issue & Return", href: withPrefix("/dashboard/issue-return"), icon: ArrowLeftRight },
+          { name: "Dept Purchase", href: withPrefix("/dashboard/purchase"), icon: ShoppingCart, color: "emerald" },
+          { name: "Center Inventory", href: withPrefix("/dashboard/inventory"), icon: Package, color: "indigo" },
+          { name: "Issue & Return", href: withPrefix("/dashboard/issue-return"), icon: ArrowLeftRight, color: "amber" },
+          { name: "Settings", href: withPrefix("/dashboard/settings"), icon: Settings, color: "slate" },
         ]
 
       case "admin":
@@ -199,6 +200,16 @@ export function DashboardSidebar({ user, isOpen, onClose }: DashboardSidebarProp
           badgeClass: "bg-purple-50 text-purple-700 border-purple-200/80",
           gradient: "from-purple-600 via-indigo-600 to-blue-600",
           category: "Coordination Desks",
+        }
+      case "center_lead":
+      case "center-lead":
+        return {
+          title: "Center Leadership",
+          subtitle: "Specialized Center Hub",
+          badgeText: "Center Lead",
+          badgeClass: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+          gradient: "from-indigo-600 via-indigo-700 to-slate-900",
+          category: "Center Operations",
         }
       case "admin":
         return {
