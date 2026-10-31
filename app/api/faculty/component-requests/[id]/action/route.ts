@@ -13,7 +13,7 @@ async function ensureSchema() {
   await dbOperations.runLightMigrations()
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["faculty", "admin"])) {

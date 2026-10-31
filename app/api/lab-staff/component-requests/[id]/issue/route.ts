@@ -8,7 +8,7 @@ import { db } from "@/lib/database"
 import { sendEmail, emailTemplates } from "@/lib/notifications"
 import { logComponentActivity, getUserInfoForLogging } from "@/lib/activity-logger"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["lab_staff", "admin"])) {

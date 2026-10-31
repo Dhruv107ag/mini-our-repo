@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { getInventoryItemById, deleteInventoryItem } from "@/lib/inventory-db"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: rawId } = await params
     const id = Number(rawId)
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (user && !hasRole(user, ["lab_staff", "admin", "hod"])) {

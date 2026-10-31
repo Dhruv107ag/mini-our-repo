@@ -16,7 +16,7 @@ async function ensureSchema() {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const db = Database.getInstance()
   try {

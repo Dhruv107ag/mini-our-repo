@@ -23,6 +23,7 @@ const roleMap: Array<{ pattern: RegExp; roles: string[] }> = [
   { pattern: /^\/api\/faculty(?:\/|$)/, roles: ["faculty", "admin"] },
   { pattern: /^\/api\/lab-staff(?:\/|$)/, roles: ["lab_staff", "admin"] },
   { pattern: /^\/api\/center-lead(?:\/|$)/, roles: ["center_lead", "admin"] },
+  { pattern: /^\/api\/others(?:\/|$)/, roles: ["others", "admin"] },
 ]
 
 export function middleware(req: NextRequest) {

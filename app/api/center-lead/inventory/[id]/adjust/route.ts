@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { adjustCenterInventoryStock } from "@/lib/center-db"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["center_lead", "admin"])) {
       return NextResponse.json({ error: "Forbidden: Center Lead or Admin access required" }, { status: 403 })
     }
 
-    const inventoryId = Number(params.id)
+    const { id } = await params
+    const inventoryId = Number(id)
     if (isNaN(inventoryId)) {
       return NextResponse.json({ error: "Invalid inventory item ID" }, { status: 400 })
     }
@@ -41,6 +42,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ success: true, item: updated })
   } catch (error: any) {
     console.error("POST /api/center-lead/inventory/[id]/adjust error:", error)
-    return NextResponse.json({ success: false, error: error?.message || "Failed to adjust stock" }, { status: 500 })
+    return NextResponse.json({ success: false, error: error?.message || "Failed to adjust inventory stock" }, { status: 500 })
   }
 }

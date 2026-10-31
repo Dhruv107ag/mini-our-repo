@@ -10,7 +10,7 @@ import { logLabBookingActivity, getUserInfoForLogging } from "@/lib/activity-log
 
 const db = Database.getInstance()
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(request)
     if (!user || user.role !== 'faculty') {

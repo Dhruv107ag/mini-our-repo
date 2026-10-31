@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, hasRole } from "@/lib/auth"
 import { updateInventoryQuantity } from "@/lib/inventory-db"
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (user && !hasRole(user, ["lab_staff", "admin", "hod", "lab_coordinator"])) {

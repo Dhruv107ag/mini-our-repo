@@ -43,7 +43,7 @@ async function canManage(userId: number, labId: number): Promise<boolean> {
   return false
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["lab_staff", "admin"])) {
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["lab_staff", "admin"])) {

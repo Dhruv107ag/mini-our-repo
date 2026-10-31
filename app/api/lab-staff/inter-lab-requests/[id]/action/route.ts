@@ -10,7 +10,7 @@ import { approveOrRejectInterLabRequest } from "@/lib/inter-lab-service"
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyToken(req)

@@ -11,7 +11,7 @@ const db = Database.getInstance()
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyToken(req)
@@ -19,7 +19,8 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const loanId = parseInt(params.id)
+    const resolvedParams = await params;
+    const loanId = parseInt(resolvedParams.id)
     if (isNaN(loanId)) {
       return NextResponse.json({ error: "Invalid loan ID" }, { status: 400 })
     }

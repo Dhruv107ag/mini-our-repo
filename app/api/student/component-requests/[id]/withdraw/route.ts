@@ -7,7 +7,7 @@ import { verifyToken, hasRole } from "@/lib/auth"
 import { db } from "@/lib/database"
 import { sendEmail, emailTemplates } from "@/lib/notifications"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(req)
     if (!user || !hasRole(user, ["student"])) {

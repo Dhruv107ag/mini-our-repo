@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { dbOperations } from "@/lib/database"
 import { verifyToken, hasRole } from "@/lib/auth"
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await verifyToken(request)
   if (!user || !hasRole(user, ["admin"])) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })

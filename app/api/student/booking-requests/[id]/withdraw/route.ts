@@ -9,7 +9,7 @@ import { sendEmail, emailTemplates } from "@/lib/notifications"
 
 const db = Database.getInstance()
 
-export async function POST(request: NextRequest, context: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { params } = context;
   try {
     const user = await verifyToken(request)

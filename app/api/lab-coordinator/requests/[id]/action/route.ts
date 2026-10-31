@@ -10,7 +10,7 @@ import { logLabBookingActivity, getUserInfoForLogging } from "@/lib/activity-log
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyToken(request)
