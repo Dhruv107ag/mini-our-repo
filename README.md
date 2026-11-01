@@ -7,6 +7,92 @@ A comprehensive platform for managing laboratory bookings, equipment, users, and
 
 ---
 
+## 🚀 Quick Start Guide (Run Project from Fresh Clone)
+
+Follow these simple steps to clone, configure, and run the project locally on your machine:
+
+### 1️⃣ Prerequisites
+Make sure you have the following installed on your system:
+* **Node.js**: v18.18+ or v20+ (`node -v`)
+* **pnpm**: Recommended package manager (`npm install -g pnpm`)
+* **Git**: (`git --version`)
+* **XAMPP / MySQL** *(Optional)*: Required only if you want full database persistence; otherwise the application runs completely offline in demo/mock mode.
+
+---
+
+### 2️⃣ Clone the Repository
+```bash
+git clone https://github.com/Dhruv107ag/mini-our-repo.git
+cd mini-our-repo
+```
+
+---
+
+### 3️⃣ Install Dependencies
+```bash
+pnpm install
+```
+
+---
+
+### 4️⃣ Environment Configuration
+Create your local environment file by copying the template:
+
+**On Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env.local
+```
+
+**On Linux / Mac (Bash):**
+```bash
+cp .env.example .env.local
+```
+
+> **Choose Your Mode in `.env.local`:**
+> * **Option A: Zero-DB / Demo Mode (Fastest & Recommended for Testing):**
+>   ```env
+>   USE_DB_AUTH=false
+>   ```
+>   *(Zero database setup required! You can log in immediately with preconfigured demo accounts).*
+>
+> * **Option B: MySQL Database Mode (For Full Persistence):**
+>   ```env
+>   USE_DB_AUTH=true
+>   DB_HOST=127.0.0.1
+>   DB_PORT=3306
+>   DB_NAME=lnmiit_lab_management
+>   DB_USER=root
+>   DB_PASSWORD=
+>   ```
+>   *(Ensure MySQL is running in XAMPP on port 3306 and import `scripts/database-schema.sql` into phpMyAdmin/MySQL).*
+
+---
+
+### 5️⃣ Start the Development Server
+```bash
+pnpm dev
+```
+
+Open your browser and navigate to: **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+### 🔑 Preconfigured Demo Accounts (Login Credentials)
+All accounts use the default password: **`123`**
+
+| Role | Email | Password | Access Portal |
+| :--- | :--- | :--- | :--- |
+| **System Admin** | `admin@lnmiit.ac.in` | `123` | `/admin/dashboard` |
+| **Faculty Member** | `faculty@lnmiit.ac.in` | `123` | `/faculty/dashboard` |
+| **Lab Staff User** | `staff@lnmiit.ac.in` | `123` | `/lab-staff/dashboard` |
+| **Student User** | `student@lnmiit.ac.in` | `123` | `/student/dashboard` |
+| **HOD (Head of Dept)** | `hod@lnmiit.ac.in` | `123` | `/hod/dashboard` |
+| **Lab Coordinator** | `coordinator@lnmiit.ac.in` | `123` | `/lab-coordinator/dashboard` |
+| **Center Lead** | `centerlead@lnmiit.ac.in` | `123` | `/center-lead/dashboard` |
+| **Others (T&P / Clubs)** | `other@lnmiit.ac.in` | `123` | `/others/dashboard` |
+
+---
+
 ## 📁 Detailed Project Structure
 
 ```
