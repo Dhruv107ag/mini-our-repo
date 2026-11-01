@@ -2,6 +2,9 @@
 
 A comprehensive platform for managing laboratory bookings, equipment, users, and workflows at The LNM Institute of Information Technology.
 
+> **Current Maintainers & Developers:** **Dhruv Agrawal** (`24UCS016`) & **Aditya Jakhar** (`24UCS252`)  
+> **Original Foundation:** Abhinav Dogra (`23UCS507`) & Abhinav Thulal (`23UCS508`)
+
 ---
 
 ## 📁 Detailed Project Structure
@@ -986,17 +989,34 @@ Added automated booking reminders (`app/api/cron/booking-reminders/route.ts`) th
 
 
 
-## 👥 Credits
+## 👥 Project Contributors & Maintainers
 
-**Developed by:**
-- **Abhinav Dogra** (23UCS507)
-- **Abhinav Thulal** (23UCS508)
+### 🛠️ Current Maintainers & Developers (2025–2026)
+* **Dhruv Agrawal** (`24UCS016`) — Project Lead, Architecture Refactoring, Bug Fixes, Next.js 15 Migration & Database Resiliency
+  * **Email:** [24ucs016@lnmiit.ac.in](mailto:24ucs016@lnmiit.ac.in) / [dhruvagrawal1616100@gmail.com](mailto:dhruvagrawal1616100@gmail.com)
+  * **GitHub:** [@Dhruv107ag](https://github.com/Dhruv107ag)
+* **Aditya Jakhar** (`24UCS252`) — Feature Refactoring, System Testing & Workflow Verification
+  * **Email:** [24ucs252@lnmiit.ac.in](mailto:24ucs252@lnmiit.ac.in)
 
-**Institution:** The LNM Institute of Information Technology (LNMIIT)
+### 🏛️ Original Foundation & Authors (2024–2025)
+* **Abhinav Dogra** (`23UCS507`)
+* **Abhinav Thulal** (`23UCS508`)
 
-**Project Type:** Lab Management System
+**Institution:** The LNM Institute of Information Technology (LNMIIT), Jaipur  
+**Academic Session:** 2025–2026  
+**Repository:** [https://github.com/Dhruv107ag/mini-our-repo](https://github.com/Dhruv107ag/mini-our-repo)
 
-**Year:** 2024-2025
+---
+
+## 📞 Contact & Support
+
+For issues, questions, feedback, or support regarding the LNMIIT Lab Management System:
+- **Lead Maintainer:** Dhruv Agrawal (`24UCS016`)
+  - **Institute Email:** [24ucs016@lnmiit.ac.in](mailto:24ucs016@lnmiit.ac.in)
+  - **Personal Email:** [dhruvagrawal1616100@gmail.com](mailto:dhruvagrawal1616100@gmail.com)
+- **Co-Maintainer:** Aditya Jakhar (`24UCS252`)
+  - **Institute Email:** [24ucs252@lnmiit.ac.in](mailto:24ucs252@lnmiit.ac.in)
+- **GitHub Repository & Issues:** [https://github.com/Dhruv107ag/mini-our-repo/issues](https://github.com/Dhruv107ag/mini-our-repo/issues)
 
 ---
 
@@ -1006,26 +1026,4 @@ This project is developed for LNMIIT internal use.
 
 ---
 
-## 🤝 Contributing
-
-This is an academic project. For questions or contributions:
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📞 Support
-
-For issues, questions, or support:
-- Check [SETUP.md](SETUP.md) for troubleshooting
-- Review [design.md](design.md) for architecture details
-- Check [working.md](working.md) for workflow documentation
-- Create an issue on GitHub
-
----
-
 **Happy Lab Managing! 🎓🔬**
-
