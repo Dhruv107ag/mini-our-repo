@@ -3,9 +3,6 @@ const nextConfig = {
   reactStrictMode: false, // Avoid double-renders in production
   poweredByHeader: false, // Remove unnecessary X-Powered-By header
   compress: true,         // Enable gzip compression
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
