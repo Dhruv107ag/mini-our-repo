@@ -67,7 +67,12 @@ export async function POST(request: NextRequest) {
         } else {
           // Compare role (normalize hyphen/underscore differences)
           if (String(dbUser.role).toLowerCase() !== normalizedRole) {
-            return NextResponse.json({ error: "Invalid credentials or role" }, { status: 401 })
+            const prettyUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).replace(/-/g, " ")
+            const prettyRegisteredRole = String(dbUser.role).replace(/_/g, " ").toUpperCase()
+            return NextResponse.json(
+              { error: `Invalid role selected. Account ${email} is registered as ${prettyRegisteredRole}, not as ${prettyUserRole}.` },
+              { status: 401 }
+            )
           }
         }
         
@@ -87,6 +92,9 @@ export async function POST(request: NextRequest) {
           } else {
             const legacy = crypto.createHash("sha256").update(password).digest("hex")
             ok = legacy === stored
+          }
+          if (!ok) {
+            return NextResponse.json({ error: "Invalid password" }, { status: 401 })
           }
           if (ok) {
             // Format display name with salutation for all users
@@ -143,24 +151,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fallback: Find user in mock database or auto-generate session for valid @lnmiit.ac.in emails
-    let user = mockUsers.find((u) => {
-      const mockRoleNorm = String(u.role).replace(/-/g, "_").toLowerCase()
-      return u.email === email && mockRoleNorm === normalizedRole
-    })
-
-    // If no exact mock user match, fallback to dynamic mock user for demo convenience
-    if (!user) {
-      const nameFromEmail = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-      user = {
-        id: String(Math.floor(Math.random() * 9000) + 1000),
-        email,
-        password,
-        role: normalizedRole,
-        name: nameFromEmail || "Demo User",
-        department: "CSE",
-      }
+    // Strict verification against mock accounts (enforce role & password match)
+    const existingMockUser = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase())
+    if (!existingMockUser) {
+      return NextResponse.json(
+        { error: "Account not found. Please verify your LNMIIT email address." },
+        { status: 401 }
+      )
     }
+
+    const mockRoleNorm = String(existingMockUser.role).replace(/-/g, "_").toLowerCase()
+    if (mockRoleNorm !== normalizedRole) {
+      const prettyUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).replace(/-/g, " ")
+      const prettyRegisteredRole = existingMockUser.role.replace(/_/g, " ").toUpperCase()
+      return NextResponse.json(
+        { error: `Invalid role selected. Account ${email} is registered as ${prettyRegisteredRole}, not as ${prettyUserRole}.` },
+        { status: 401 }
+      )
+    }
+
+    if (existingMockUser.password !== password) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+    }
+
+    const user = existingMockUser
 
   // Create encoded session payload and set as httpOnly cookie for API auth (demo only)
   const tokenPayload = {

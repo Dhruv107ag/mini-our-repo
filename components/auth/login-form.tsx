@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from "lucide-react"
 
 /**
  * LoginForm Component
@@ -34,6 +34,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [resetSuccess, setResetSuccess] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -85,6 +86,7 @@ export function LoginForm() {
       const data = await response.json()
 
       if (response.ok) {
+        setErrorMessage("")
         // Store user data in localStorage for client-side access
         localStorage.setItem("user", JSON.stringify(data.user))
 
@@ -93,7 +95,9 @@ export function LoginForm() {
         const target = role ? `/${role}/dashboard` : "/"
         window.location.href = target
       } else {
-        alert(data.error || "Login failed")
+        const errMsg = data.error || "Login failed"
+        setErrorMessage(errMsg)
+        alert(errMsg)
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -175,6 +179,15 @@ export function LoginForm() {
           )}
 
           {/* Warm Coffee & Cream Elevated Card */}
+          {errorMessage && (
+            <div className="animate-login-card mx-auto w-full">
+              <div className="rounded-xl border border-red-300 bg-red-50/95 dark:bg-red-950/80 px-3.5 py-2.5 text-xs sm:text-sm text-red-700 dark:text-red-200 shadow-sm flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
+                <span>{errorMessage}</span>
+              </div>
+            </div>
+          )}
+
           <Card className="animate-login-card w-full overflow-hidden rounded-2xl border-t-4 border-t-[#964724] border-x border-b border-[#e2d5c5]/80 bg-[#faf6f0]/98 dark:bg-[#1c140e]/98 shadow-[0_16px_40px_rgba(20,13,8,0.4)] backdrop-blur-md transition-all duration-300">
             <CardContent className="p-5 sm:p-6 sm:py-6">
               <form onSubmit={handleSubmit} className="space-y-3">
